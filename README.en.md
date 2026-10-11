@@ -8,7 +8,7 @@ Display IP regions for comments, nested replies, posts, articles, and creators' 
 
 [Download the latest release](https://github.com/Chihiro521/bili-ip-region/releases/latest) · [Changelog](CHANGELOG.md) · [MIT License](LICENSE)
 
-Current version: **0.4.1 preview**. The extension interface is in Chinese; the instructions below include its exact button labels.
+Current version: **0.4.2 preview**. The extension interface is in Chinese; the instructions below include its exact button labels.
 
 ## Features
 
@@ -36,6 +36,8 @@ Profile capsule style, using synthetic data:
 To update, replace the extracted files, reload the extension on the extensions page, and refresh Bilibili. Pin the extension to the toolbar for convenient access to its settings.
 
 ## Authorize post and profile queries
+
+Authorization confirmation sends the existing web login cookies and ignores cookie updates returned by the authorization endpoints. App detail queries use the saved App credential without web cookies.
 
 1. Sign in to Bilibili in the current browser and open a creator's profile page.
 2. Open the extension popup, keep **个人主页属地** (Profile region) enabled, and click **授权主页查询** (Authorize profile queries).

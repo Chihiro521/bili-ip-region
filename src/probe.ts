@@ -14,7 +14,7 @@ export type ProbeResult = {
 };
 export type Report = {
   version: string; testedAt: string; browser: string; appAuthorized: boolean;
-  webLoggedIn: boolean | null; credentialsMode: 'include';
+  webLoggedIn: boolean | null; credentialsMode: 'omit';
   results: ProbeResult[]; successfulAuthorCount: number; gatePassed: boolean; articles?: ArticleResult[];
 };
 
@@ -56,7 +56,7 @@ export async function probeOne(id: string, method: Method, host: typeof HOSTS[nu
   };
   try {
     const response = await fetch(endpoint, {
-      method: 'POST', credentials: 'include',
+      method: 'POST', credentials: 'omit',
       headers: metadataHeaders(deviceId, accessToken),
       body: requestBody(method, id) as Uint8Array<ArrayBuffer>,
       signal: AbortSignal.timeout(12000),
@@ -103,7 +103,7 @@ export async function runProbe(ids: string[], deviceId: string, accessToken?: st
   return {
     version: chrome.runtime.getManifest().version, testedAt: new Date().toISOString(), browser: navigator.userAgent,
     appAuthorized: !!accessToken,
-    webLoggedIn, credentialsMode: 'include', results, successfulAuthorCount,
+    webLoggedIn, credentialsMode: 'omit', results, successfulAuthorCount,
     gatePassed: successfulAuthorCount >= 2,
   };
 }

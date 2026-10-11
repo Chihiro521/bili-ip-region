@@ -16,6 +16,9 @@ export async function configureProfileHeaders(): Promise<void> {
     action: { type: chrome.declarativeNetRequest.RuleActionType.MODIFY_HEADERS, requestHeaders: [
       { header: 'user-agent', operation: chrome.declarativeNetRequest.HeaderOperation.SET, value: PROFILE_UA },
       { header: 'origin', operation: chrome.declarativeNetRequest.HeaderOperation.REMOVE },
+    ], responseHeaders: [
+      // 确认设备授权要发送网页登录 Cookie，但不能让响应覆盖或删除它。
+      { header: 'set-cookie', operation: chrome.declarativeNetRequest.HeaderOperation.REMOVE },
     ] }, condition: {
       regexFilter: '^https://(app\\.bilibili\\.com/x/v2/space(?:\\?|$)|passport\\.bilibili\\.com/x/passport-tv-login/)',
       initiatorDomains: [chrome.runtime.id], resourceTypes: [chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST],

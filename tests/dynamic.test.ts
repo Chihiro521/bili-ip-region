@@ -25,6 +25,7 @@ test('动态页面范围覆盖列表、详情和个人空间', () => {
 test('动态查询携带已有授权，并核对返回 ID 和作者', async () => {
   const original = globalThis.fetch;
   globalThis.fetch = async (input, init) => {
+    assert.equal(init?.credentials, 'omit');
     assert.equal(new Headers(init?.headers).get('authorization'),'identify_v1 fixture-only-access-token');
     return new Response(frame(String(input).split('/').at(-1)!, 'IP属地：河北'), { headers: { 'grpc-status': '0' } });
   };

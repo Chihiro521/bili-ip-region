@@ -64,6 +64,7 @@ test('空文章字段在已授权时尝试 App，输出只包含内容对应的�
     calls.push({ input, init });
     if (input.includes('web-dynamic')) return Response.json(mapping());
     if (input.includes('viewinfo')) return Response.json({ code: 0, data: { mid, location: '' } });
+    assert.equal(init?.credentials, 'omit');
     return new Response(appResponse(), { headers: { 'grpc-status': '0' } });
   });
   const result = await api.article({ kind: 'opus', id: opusId }, { accessToken: 'fixture-only-access-token', deviceId: 'fixture-device' });

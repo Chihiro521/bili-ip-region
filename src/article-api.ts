@@ -27,7 +27,7 @@ export class ArticleApi {
     if (info.region) return { target, articleId, authorMid, status: 'ok', region: info.region, source: 'article' };
     if (authorization) {
       const response = await this.fetcher('https://app.bilibili.com/bilibili.app.dynamic.v2.Opus/OpusDetail', {
-        method: 'POST', credentials: 'include', redirect: 'error', cache: 'no-store',
+        method: 'POST', credentials: 'omit', redirect: 'error', cache: 'no-store',
         headers: metadataHeaders(authorization.deviceId, authorization.accessToken),
         body: articleRequestBody(articleId!) as Uint8Array<ArrayBuffer>, signal: AbortSignal.timeout(12000),
       });
