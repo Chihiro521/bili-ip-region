@@ -65,9 +65,7 @@
 
 ## 动态正文
 
-动态正文仍在验证阶段。可在弹窗展开「动态正文取数诊断」并打开完整验证页面，输入动态 ID 或链接，查看请求和返回 ID、发布者、地区及结果。
-
-当前解析 `ptime_location_text` 和顶层 `ModuleCopyright` 中明确标注「IP属地」的文字。取得至少两个真实发布者的非空发布属地、核对动态 ID 后，再接入动态列表、详情及个人空间的正文标签。
+当前提供接口检测入口，可检查指定动态是否返回发布属地。动态正文和专栏作者的页面显示仍在完善中。
 
 ## 开发
 
@@ -86,14 +84,10 @@ pwsh -NoProfile -File scripts/package.ps1
 
 项目提供 GitHub Actions：检查公开文件、TypeScript、代码测试、构建、图标和打包，并上传构建产物。
 
-## 验证范围
-
-23 项代码测试覆盖 ID 精度、地区解析、账号对应、授权顺序、默认请求上下文及动态协议。浏览器检查使用实际加载的扩展与明确标注的合成数据，覆盖评论组件、楼中楼、主页节点、授权开关、主题、缓存和快速切换。原生 Worker `fetch` 的旧报错已复现并修复。
-
-已有真实 Chrome 评论页面的地区核对记录。浏览器自动检查中的 App 授权和地区返回使用模拟响应；Chrome / Edge 全场景验证仍需更多实际页面记录。参见 [验证说明](docs/verification.md)。
-
 ## 许可与来源
 
 本项目采用 [MIT 许可](LICENSE)。评论 Hook 参考 BiliReveal，主页取数参考 BiliRevealForSpace，设备授权流程改编自 libBilibiliToken，保留对应 MIT 声明。
 
 完整来源和依赖声明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+

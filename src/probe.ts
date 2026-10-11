@@ -2,8 +2,7 @@ import { concat, decodeResponse, intField, requestBody, stringField } from './pr
 import type { Decoded, Method } from './protocol.ts';
 
 export const MOBILE_UA = 'Dalvik/2.1.0 (Linux; U; Android 11) 9.14.0 mobi_app/android build/9140400 grpc-java-cronet/1.36.1';
-// 第一条由用户的手机截图确认：正文底部显示 IP 属地浙江。
-export const SAMPLES = ['1251190976967344129', '1232186887046692873'];
+export const SAMPLES: string[] = [];
 export const HOSTS = ['app.bilibili.com', 'grpc.biliapi.net'] as const;
 export const METHODS: Method[] = ['DynDetail', 'OpusDetail'];
 export type ProbeResult = {

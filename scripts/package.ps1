@@ -14,9 +14,11 @@ foreach ($taskName in @('background.js','popup.js','comment-page.js','comment-br
 foreach ($taskName in @('icons','licenses')) {
   Copy-Item -LiteralPath (Join-Path $taskProjectRoot ('dist/' + $taskName)) -Destination $taskRuntime -Recurse
 }
-foreach ($taskName in @('README.md','README.en.md','LICENSE','THIRD_PARTY_NOTICES.md','CHANGELOG.md','docs','licenses')) {
+foreach ($taskName in @('README.md','README.en.md','LICENSE','THIRD_PARTY_NOTICES.md','CHANGELOG.md','licenses')) {
   Copy-Item -LiteralPath (Join-Path $taskProjectRoot $taskName) -Destination $taskStage -Recurse
 }
+$null = New-Item -ItemType Directory -Path (Join-Path $taskStage 'docs') -Force
+Copy-Item -LiteralPath (Join-Path $taskProjectRoot 'docs/assets') -Destination (Join-Path $taskStage 'docs') -Recurse
 $taskInstall = @"
 Chrome / Edge 安装：
 1. 解压这个 ZIP。

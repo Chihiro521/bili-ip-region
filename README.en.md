@@ -65,9 +65,7 @@ Access to Bilibili pages enables label injection. API / App host permissions ena
 
 ## Post body regions
 
-Post body support remains in validation. Expand **动态正文取数诊断** (Post body diagnostics) in the popup and open **打开完整验证页面** (Open the full validation page). Enter post IDs or links to inspect requested and returned IDs, authors, regions, and results.
-
-The current parser reads `ptime_location_text` and text explicitly labeled “IP属地” from the top-level `ModuleCopyright`. Before enabling labels in feeds, post detail pages, and profile feeds, validation must obtain nonempty publication regions from at least two real authors and verify each post ID.
+The popup currently offers API diagnostics for individual posts. Page labels for post bodies and article authors are still being developed.
 
 ## Development
 
@@ -86,14 +84,10 @@ Build output is written to `dist/`; installation packages go to `outputs/`. Edit
 
 GitHub Actions checks public files, TypeScript, code tests, the build, icons, and packaging, then uploads the build artifact. Packages built from this source include both README languages.
 
-## Validation scope
-
-The 23 code tests cover ID precision, region parsing, account matching, authorization order, default request context, and post protocols. Browser checks load the actual extension with explicitly synthetic data and cover comment components, nested replies, profile nodes, authorization switches, themes, caching, and rapid navigation. The previous native Worker `fetch` invocation error has been reproduced and fixed.
-
-Real Chrome comment pages have previously been checked against returned regions. Automated browser checks use simulated App authorization and region responses. Full verification across real Chrome / Edge pages still needs more recorded cases. See the [verification notes (Chinese)](docs/verification.md).
-
 ## License and credits
 
 This project is licensed under [MIT](LICENSE). Comment hooks reference BiliReveal; profile queries reference BiliRevealForSpace; device authorization is adapted from libBilibiliToken. Their corresponding MIT notices are retained.
 
 See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the full list of sources and dependency notices.
+
+
