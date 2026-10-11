@@ -5,7 +5,7 @@
 <h1 align="center">Bilibili IP Region</h1>
 
 <p align="center">Display IP regions for comments, nested replies, posts, articles, and creators' profile pages on Bilibili.</p>
-<p align="center"><strong>Chrome / Edge · 0.4.4 preview</strong></p>
+<p align="center"><strong>Chrome / Edge · 0.4.5 preview</strong></p>
 
 <p align="center">
   <a href="README.md">简体中文</a> · <strong>English</strong><br>
@@ -83,16 +83,18 @@ To update, replace the extracted files, reload the extension on the extensions p
 
 ## Authorize post and profile queries
 
-Authorization confirmation sends the existing web login cookies and ignores cookie updates returned by the authorization endpoints. App detail queries use the saved App credential without web cookies.
+Authorization uses the selected Bilibili tab's cookie store and verifies the account. Web cookies are used only for this background confirmation, without being saved to extension storage, and cookie updates from the authorization endpoints are ignored. App detail queries use the saved App credential without web cookies.
 
 1. Sign in to Bilibili in the current browser and open a creator's profile page.
 2. Open the extension popup, keep **个人主页属地** (Profile region) enabled, and click **授权主页查询** (Authorize profile queries).
-3. Allow access to Bilibili's login endpoint. This creates a device login credential for the currently signed-in account and stores it locally in this browser's extension storage.
+3. Allow reading the current Bilibili session and accessing its login endpoint. This creates a device login credential for the currently signed-in account and stores it locally in this browser's extension storage.
 4. Once **已授权** (Authorized) appears, posts and profiles reuse this authorization. Other creators' profiles are queried by UID. The full diagnostics page can also authorize using your most recently opened Bilibili tab.
 
 Profile labels show the region of **the target account whose profile is open**. Comments, posts, and articles use the region of each piece of content at publication. Different content from the same author may have different regions.
 
 **清除本地授权** (Clear local authorization) removes the extension's credential, post and profile caches, and labels that depend on authorization. You can revoke the corresponding device login in your Bilibili account settings. Click the authorization button again when the credential expires.
+
+If the website is logged in but authorization confirmation returns `-101`, the authorization endpoint did not recognize the credentials in that request. Sign in to Bilibili again and retry authorization. The popup retains the endpoint's error code and message.
 
 ## If a label does not appear
 
@@ -110,7 +112,7 @@ Switches are stored in `chrome.storage.sync`. Login credentials remain in the cu
 
 Post cache entries are keyed by content ID, and profile entries by target UID. Nonempty results last 30 minutes, empty results last 5 minutes, and each cache holds at most 200 entries. Reauthorizing or clearing authorization clears these caches. Posts near the visible area are queried, with at most three post requests running at once in the background.
 
-Access to Bilibili pages enables label injection. API / App host permissions enable data requests. Permission for the login host is requested only when you click the profile authorization button.
+Access to Bilibili pages enables label injection. API / App host permissions enable data requests. Cookie access and login host permissions are requested only when you click the authorization button. Session cookies are read only during authorization, and temporary request rules are removed afterwards.
 
 ## Query diagnostics
 

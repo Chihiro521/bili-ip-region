@@ -14,9 +14,3 @@ chrome.storage.onChanged.addListener((changes, area) => {
   commentsEnabled = changes.commentsEnabled.newValue !== false;
   publish();
 });
-chrome.runtime.onMessage.addListener((message, sender, respond) => {
-  if (sender.id !== chrome.runtime.id || message?.type !== 'profile:auth-context' || window.top !== window) return;
-  // 只在用户点击扩展授权按钮后，由后台请求当前网页的 CSRF 值。
-  const csrf = document.cookie.match(/(?:^|;\s*)bili_jct=([a-f\d]{32})(?:;|$)/i)?.[1] ?? null;
-  respond({ csrf });
-});

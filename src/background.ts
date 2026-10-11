@@ -9,6 +9,7 @@ import { configureHeaders } from './request-headers.ts';
 import { dynamicPage } from './dynamic-data.ts';
 import { uidString } from './profile-data.ts';
 import { getDynamic } from './dynamic-background.ts';
+import { ProfileAuthorizationError } from './profile-api.ts';
 
 let activeProbe: Promise<unknown> | null = null;
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -18,7 +19,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   try { const url = new URL(sender.url ?? ''); page = url.protocol === 'https:' && ['www.bilibili.com', 't.bilibili.com', 'space.bilibili.com'].includes(url.hostname); } catch { /* 非 B 站页面。 */ }
   const respond = (task: Promise<unknown>) => {
     task.then(value => sendResponse({ ok: true, ...value as object })).catch(error => sendResponse({ ok: false,
-      error: error instanceof Error ? error.message : '请求失败' }));
+      error: error instanceof Error ? error.message : '请求失败',
+      ...(error instanceof ProfileAuthorizationError ? { errorCode: error.code ?? null, errorStage: error.stage, serverMessage: error.serverMessage } : {}) }));
   };
   if (message?.type === 'preferences:get' && (popup || page)) {
     respond(initializeStorage.then(async () => ({ preferences: await preferences(), version: chrome.runtime.getManifest().version }))); return true;

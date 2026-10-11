@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { uidString, spaceUid, decodeProfileResponse, decodeCredential, normalizeProfileRegion } from '../src/profile-data.ts';
-import { ProfileApi, signAppQuery } from '../src/profile-api.ts';
+import { ProfileApi, ProfileAuthorizationError, signAppQuery } from '../src/profile-api.ts';
 import { APP_SIGN_KEY } from '../src/profile-client-constants.ts';
 
 test('主页 UID 从目标地址获取，拒绝外站和损失精度的数值', () => {
@@ -77,9 +77,33 @@ test('默认 fetch 保留全局调用上下文，授权请求不会触发 Illega
 });
 test('授权失败立即停止，不进行后续轮询或查询', async () => {
   let requests = 0;
-  const api = new ProfileApi('XXFIXTURE', async () => Response.json(++requests === 1 ? { code: 0, data: { auth_code: 'fixture-auth-code' } } : { code: -101 }));
-  await assert.rejects(api.authorize('0'.repeat(32), '100'), /网页登录授权失败/);
+  const api = new ProfileApi('XXFIXTURE', async () => Response.json(++requests === 1 ? { code: 0, data: { auth_code: 'fixture-auth-code' } } : { code: -101, message: 'fixture-session-not-recognized' }));
+  await assert.rejects(api.authorize('0'.repeat(32), '100'), error => error instanceof ProfileAuthorizationError
+    && error.code === -101 && error.stage === 'confirm' && error.serverMessage === 'fixture-session-not-recognized'
+    && error.message.includes('fixture-session-not-recognized'));
   assert.equal(requests, 2);
+});
+test('授权异常兼容缺少错误文字及旧版 msg 字段，不把 -101 推断为设备被拒绝', async () => {
+  for (const message of [undefined, null, 0, '0', '', '   ', {}]) {
+    const error = new ProfileAuthorizationError(-101, message);
+    assert.equal(error.serverMessage, null);
+    assert.equal(error.message, '授权确认失败（-101）');
+  }
+  const api = new ProfileApi('XXFIXTURE', async url => Response.json(url.endsWith('/auth_code')
+    ? { code: 0, data: { auth_code: 'fixture-auth-code' } } : { code: -101, msg: 'fixture-legacy-message' }));
+  await assert.rejects(api.authorize('0'.repeat(32), '100'), error => error instanceof ProfileAuthorizationError
+    && error.serverMessage === 'fixture-legacy-message');
+});
+test('隔离授权由临时请求头提供会话，三个步骤均不自动携带或写入网页 Cookie', async () => {
+  const modes: (RequestCredentials | undefined)[] = [];
+  const api = new ProfileApi('XXFIXTURE', async (url, init) => {
+    modes.push(init?.credentials);
+    const data = url.endsWith('/auth_code') ? { auth_code: 'fixture-auth-code' }
+      : url.endsWith('/confirm') ? {} : { mid: 100, access_token: 'fixture-token-123', expires_in: 3600 };
+    return Response.json({ code: 0, data });
+  });
+  assert.equal((await api.authorize('0'.repeat(32), '100', true)).ownerUid, '100');
+  assert.deepEqual(modes, ['omit', 'omit', 'omit']);
 });
 test('主页接口用查看者凭据查询目标 UID，返回账号必须对应目标', async () => {
   const api = new ProfileApi('XXFIXTURE', async url => {

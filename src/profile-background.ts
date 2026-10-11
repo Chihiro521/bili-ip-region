@@ -1,7 +1,8 @@
-import { ProfileApi, PROFILE_UA } from './profile-api.ts';
+import { ProfileApi, ProfileAuthorizationError, PROFILE_UA } from './profile-api.ts';
 import { uidString } from './profile-data.ts';
 import type { ProfileCredential, ProfileResult } from './profile-data.ts';
 import { preferences } from './preferences.ts';
+import { withWebSession, WEB_LOGIN_NAV } from './profile-web-session.ts';
 
 const AUTH_KEY = 'profileAuth';
 let authTask: Promise<void> | null = null;
@@ -62,17 +63,36 @@ export async function authorizeProfile(tabId: number): Promise<void> {
   if (authTask) return authTask;
   const currentGeneration = generation;
   authTask = (async () => {
-    if (!await chrome.permissions.contains({ origins: ['https://passport.bilibili.com/*'] })) throw new Error('请在扩展弹窗中允许主页查询授权');
+    if (!await chrome.permissions.contains({ permissions: ['cookies'], origins: ['https://passport.bilibili.com/*'] })) throw new Error('请点击授权按钮，允许读取当前 B 站会话及访问登录接口');
     const tab = await chrome.tabs.get(tabId);
     const url = new URL(tab.url ?? '');
     if (url.protocol !== 'https:' || !['www.bilibili.com', 't.bilibili.com', 'space.bilibili.com'].includes(url.hostname)) throw new Error('请先打开已登录的 B 站网页');
-    const context = await chrome.tabs.sendMessage(tabId, { type: 'profile:auth-context' }, { frameId: 0 });
-    if (typeof context?.csrf !== 'string') throw new Error('请刷新 B 站网页并确认已经登录');
-    const response = await fetch('https://api.bilibili.com/x/web-interface/nav', { credentials: 'include', signal: AbortSignal.timeout(12000) });
-    const json = await response.json();
-    const ownerUid = uidString(json.data?.mid);
-    if (json.code !== 0 || json.data?.isLogin !== true || !ownerUid) throw new Error('请先登录当前浏览器中的 B 站账号');
-    const token = await (await client()).authorize(context.csrf, ownerUid);
+    const token = await withWebSession(tabId, tab.url!, async csrf => {
+      const webAccount = async (): Promise<string | null> => {
+        const response = await fetch(WEB_LOGIN_NAV, { credentials: 'omit', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(12000) });
+        if (!response.ok) throw new Error(`网页登录检查失败（HTTP ${response.status}）`);
+        const json = await response.json();
+        return json.code === 0 && json.data?.isLogin === true ? uidString(json.data.mid) : null;
+      };
+      const ownerUid = await webAccount();
+      if (!ownerUid) throw new Error('当前网页登录会话已失效，请在 B 站页面重新登录后授权');
+      try { return await (await client()).authorize(csrf, ownerUid, true); }
+      catch (error) {
+        if (error instanceof ProfileAuthorizationError && error.code === -101) {
+          let currentUid: string | null;
+          try { currentUid = await webAccount(); }
+          catch {
+            error.message += '；未能再次确认网页登录状态，请稍后重试';
+            throw error;
+          }
+          error.message += currentUid === ownerUid
+            ? '；当前网页登录仍有效，但授权接口未认可本次请求的登录凭据'
+            : '；当前网页登录会话已变化，请刷新 B 站页面后重新授权';
+          throw error;
+        }
+        throw error;
+      }
+    });
     if (generation !== currentGeneration) throw new Error('本次授权已取消');
     await chrome.storage.local.set({ [AUTH_KEY]: token });
     await announce();

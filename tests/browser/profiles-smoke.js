@@ -39,6 +39,10 @@ async (page) => {
     };
   });
   await page.route('https://space.bilibili.com/**', route => route.fulfill({ contentType: 'text/html', body: __FIXTURE_HTML__ }));
+  await page.context().addCookies([
+    { name: 'SESSDATA', value: 'fixture-web-session', domain: '.bilibili.com', path: '/', secure: true, httpOnly: true, sameSite: 'Lax' },
+    { name: 'bili_jct', value: '0'.repeat(32), domain: '.bilibili.com', path: '/', secure: true, sameSite: 'Lax' },
+  ]);
   await page.goto('https://space.bilibili.com/100');
   const checks = {};
   const labels = page.locator('[data-bili-ip-region-profile]');
@@ -56,7 +60,7 @@ async (page) => {
   await labels.filter({ hasText: '河北' }).waitFor();
   checks.authorizationAndLegacyHeader = await labels.getAttribute('data-profile-uid') === '100';
   const steps = await worker.evaluate(() => self.fixtureAuthSteps);
-  checks.authorizationSequence = steps.map(s => s.step).join(',') === 'auth_code,confirm,poll' && steps[1].credentials === 'include';
+  checks.authorizationSequence = steps.map(s => s.step).join(',') === 'auth_code,confirm,poll' && steps.every(step => step.credentials === 'omit');
   checks.noCredentialInDom = !(await page.content()).includes('fixture-only-access-token') && !(await settings.content()).includes('fixture-only-access-token');
 
   const cdp = await page.context().newCDPSession(page);
@@ -138,7 +142,7 @@ async (page) => {
   await page.evaluate(() => document.documentElement.classList.remove('dark'));
   await page.screenshot({ path: `outputs/主页显示合成验证-${version}.png`, fullPage: true });
   await worker.evaluate(async () => { await chrome.storage.local.remove('profileAuth'); await chrome.storage.session.remove('profileCache'); });
-  await page.context().clearCookies({ name: 'bili_jct', domain: 'space.bilibili.com' });
+  await page.context().clearCookies({ name: /^(SESSDATA|bili_jct)$/, domain: '.bilibili.com' });
   await settings.close();
   const report = { version, testedAt: new Date().toISOString(), source: 'isolated Chromium; actual unpacked extension; synthetic App/auth responses with receiver checks; no real device authorization',
     checks, allPassed: Object.values(checks).every(Boolean), realAppAuthorizationVerified: false };

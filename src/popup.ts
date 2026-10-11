@@ -28,6 +28,15 @@ dynamicsToggle.addEventListener('change', () => { void chrome.storage.sync.set({
 const authButton = document.querySelector<HTMLButtonElement>('#profile-authorize')!;
 const clearAuthButton = document.querySelector<HTMLButtonElement>('#profile-clear')!;
 const authStatus = document.querySelector<HTMLElement>('#profile-status')!;
+async function authTab(): Promise<chrome.tabs.Tab> {
+  let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!/^https:\/\/(www|space|t)\.bilibili\.com\//.test(tab?.url ?? '')) {
+    const candidates = await chrome.tabs.query({ url: ['https://www.bilibili.com/*', 'https://space.bilibili.com/*', 'https://t.bilibili.com/*'] });
+    tab = candidates.sort((a, b) => (b.lastAccessed ?? 0) - (a.lastAccessed ?? 0))[0];
+  }
+  if (!tab?.id) throw new Error('请先打开已登录的 B 站主页');
+  return tab;
+}
 function renderAuth(auth: { state?: string; expiresAt?: number }): void {
   authStatus.textContent = auth.state === 'ready' ? '已授权，打开任意 UP 主主页即可查询属地。'
     : auth.state === 'expired' ? '授权已过期，请重新授权。'
@@ -43,14 +52,9 @@ authButton.addEventListener('click', async () => {
   authButton.disabled = true;
   authStatus.textContent = '正在授权，请保持 B 站网页已登录……';
   try {
-    const allowed = await chrome.permissions.request({ origins: ['https://passport.bilibili.com/*'] });
-    if (!allowed) { authStatus.textContent = '未取得登录接口权限，可以再次点击授权。'; return; }
-    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!/^https:\/\/(www|space|t)\.bilibili\.com\//.test(tab?.url ?? '')) {
-      const candidates = await chrome.tabs.query({ url: ['https://www.bilibili.com/*', 'https://space.bilibili.com/*', 'https://t.bilibili.com/*'] });
-      tab = candidates.sort((a, b) => (b.lastAccessed ?? 0) - (a.lastAccessed ?? 0))[0];
-    }
-    if (!tab?.id) throw new Error('请先打开已登录的 B 站主页');
+    const allowed = await chrome.permissions.request({ permissions: ['cookies'], origins: ['https://passport.bilibili.com/*'] });
+    if (!allowed) { authStatus.textContent = '未取得当前会话与登录接口权限，可以再次点击授权。'; return; }
+    const tab = await authTab();
     const response = await chrome.runtime.sendMessage({ type: 'profile:auth:start', tabId: tab.id, confirmed: true });
     if (!response?.ok) throw new Error(response?.error || '主页授权失败');
     renderAuth(response.auth);
