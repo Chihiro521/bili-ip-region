@@ -14,7 +14,7 @@ foreach ($taskName in @('background.js','popup.js','comment-page.js','comment-br
 foreach ($taskName in @('icons','licenses')) {
   Copy-Item -LiteralPath (Join-Path $taskProjectRoot ('dist/' + $taskName)) -Destination $taskRuntime -Recurse
 }
-foreach ($taskName in @('README.md','LICENSE','THIRD_PARTY_NOTICES.md','CHANGELOG.md','docs','licenses')) {
+foreach ($taskName in @('README.md','README.en.md','LICENSE','THIRD_PARTY_NOTICES.md','CHANGELOG.md','docs','licenses')) {
   Copy-Item -LiteralPath (Join-Path $taskProjectRoot $taskName) -Destination $taskStage -Recurse
 }
 $taskInstall = @"

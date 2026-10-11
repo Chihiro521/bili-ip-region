@@ -2,6 +2,8 @@
 
 # B站网页 IP 属地
 
+**简体中文** · [English](README.en.md)
+
 在 B 站网页中显示评论、楼中楼和 UP 主个人主页的 IP 属地。支持 Chrome / Edge，使用 Manifest V3 和 TypeScript。
 
 [下载最新版](https://github.com/Chihiro521/bili-ip-region/releases/latest) · [更新记录](CHANGELOG.md) · [MIT 许可](LICENSE)
