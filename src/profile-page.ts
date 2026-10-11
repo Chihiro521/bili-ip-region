@@ -20,7 +20,7 @@ if (window.top === window) {
     if (label.textContent !== text) label.textContent = text;
     if (label.dataset.profileUid !== uid) label.dataset.profileUid = uid;
     label.title = '该账号个人主页的 IP 属地';
-    const style = 'display:inline-flex;align-items:center;flex-shrink:0;margin-inline-start:8px;padding:2px 8px;border-radius:999px;background:#61666d;color:#fff;text-shadow:none;font-size:12px;font-weight:400;font-family:inherit;line-height:18px;white-space:nowrap;vertical-align:middle;';
+    const style = 'display:inline-flex;align-items:center;flex-shrink:0;margin-inline-start:6px;padding:1px 6px;border-radius:999px;background:#61666d;color:#fff;text-shadow:none;font-size:12px;font-weight:400;font-family:inherit;line-height:16px;white-space:nowrap;vertical-align:middle;';
     if (label.style.cssText !== style) label.style.cssText = style;
     if (label.parentElement !== parent) parent.append(label);
   }

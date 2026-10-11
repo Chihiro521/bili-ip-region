@@ -5,7 +5,7 @@
 <h1 align="center">Bilibili IP Region</h1>
 
 <p align="center">Display IP regions for comments, nested replies, posts, articles, and creators' profile pages on Bilibili.</p>
-<p align="center"><strong>Chrome / Edge · 0.4.2 preview</strong></p>
+<p align="center"><strong>Chrome / Edge · 0.4.3 preview</strong></p>
 
 <p align="center">
   <a href="README.md">简体中文</a> · <strong>English</strong><br>

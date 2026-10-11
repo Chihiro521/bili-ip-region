@@ -21,7 +21,7 @@ if (window.top === window) {
     if (label.textContent !== text) label.textContent = text;
     label.dataset.articleId = result.articleId ?? ''; label.dataset.contentId = target!.id;
     label.title = '该专栏发表时的 IP 属地';
-    label.style.cssText = 'display:inline-flex;align-items:center;flex-shrink:0;margin-inline-start:8px;padding:2px 8px;border-radius:999px;background:#61666d;color:#fff;text-shadow:none;font-size:inherit;font-weight:400;font-family:inherit;line-height:1.5;white-space:nowrap;vertical-align:middle;';
+    label.style.cssText = 'display:inline-flex;align-items:center;flex-shrink:0;margin-inline-start:6px;padding:1px 6px;border-radius:999px;background:#61666d;color:#fff;text-shadow:none;font-size:12px;font-weight:400;font-family:inherit;line-height:16px;white-space:nowrap;vertical-align:middle;';
     if (target!.kind === 'opus') { if (label.parentNode !== anchor) anchor.append(label); }
     else if (label.previousSibling !== anchor) anchor.after(label);
   }

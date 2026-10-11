@@ -65,7 +65,7 @@ async (page) => {
   await page.evaluate(()=>{for(let i=0;i<8;i++) document.querySelector('#app').classList.toggle('changed');});
   checks.noDuplicates = await labels.count()===1;
   await page.evaluate(()=>document.documentElement.classList.add('dark'));
-  checks.themeAndInheritedSize = await labels.evaluate(el=>{const s=getComputedStyle(el);return s.color==='rgb(255, 255, 255)'&&s.backgroundColor==='rgb(97, 102, 109)'&&s.fontSize==='14px'&&s.borderRadius==='999px';});
+  checks.themeAndCompactSize = await labels.evaluate(el=>{const s=getComputedStyle(el);return s.color==='rgb(255, 255, 255)'&&s.backgroundColor==='rgb(97, 102, 109)'&&s.fontSize==='12px'&&s.borderRadius==='999px'&&el.getBoundingClientRect().height===18;});
   await settings.locator('#articles-enabled').uncheck();await labels.waitFor({state:'detached'});checks.switchOff=true;
   await settings.locator('#articles-enabled').check();await labels.filter({hasText:'浙江'}).waitFor();checks.switchOn=true;
   await page.evaluate(()=>fixtureArticle.switch('/read/cv100'));await labels.filter({hasText:'河北'}).waitFor();

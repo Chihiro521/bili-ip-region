@@ -78,7 +78,7 @@ async (page) => {
   await page.evaluate(() => document.documentElement.classList.add('dark'));
   checks.theme = await labels.evaluate(label => {
     const style = getComputedStyle(label);
-    return style.color === 'rgb(255, 255, 255)' && style.backgroundColor === 'rgb(97, 102, 109)' && style.borderRadius === '999px';
+    return style.color === 'rgb(255, 255, 255)' && style.backgroundColor === 'rgb(97, 102, 109)' && style.borderRadius === '999px' && style.fontSize === '12px' && label.getBoundingClientRect().height === 18;
   });
   await settings.locator('#profiles-enabled').uncheck();
   await labels.waitFor({ state: 'detached' });
