@@ -1,6 +1,6 @@
 {
   "name": "bili-ip-region",
-  "version": "0.3.4",
+  "version": "0.4.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -22,7 +22,7 @@
   "dependencies": {
     "js-md5": "0.9.2"
   },
-  "description": "B站网页 IP 属地扩展：评论、楼中楼与 UP 主个人主页。",
+  "description": "B站网页 IP 属地扩展：评论、楼中楼、动态、专栏与 UP 主个人主页。",
   "license": "MIT",
   "repository": {
     "type": "git",

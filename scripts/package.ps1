@@ -8,7 +8,7 @@ if ($taskManifest.version -ne $taskInfo.version) { throw '构建版本与源码�
 $taskStage = Join-Path $taskProjectRoot ('work/package-' + [Guid]::NewGuid().ToString('N') + '/bili-ip-region')
 $taskRuntime = Join-Path $taskStage 'dist'
 $null = New-Item -ItemType Directory -Path $taskRuntime -Force
-foreach ($taskName in @('background.js','popup.js','comment-page.js','comment-bridge.js','profile-page.js','manifest.json','popup.html','popup.css')) {
+foreach ($taskName in @('background.js','popup.js','comment-page.js','comment-bridge.js','profile-page.js','article-page.js','dynamic-main.js','dynamic-page.js','manifest.json','popup.html','popup.css')) {
   Copy-Item -LiteralPath (Join-Path $taskProjectRoot ('dist/' + $taskName)) -Destination $taskRuntime
 }
 foreach ($taskName in @('icons','licenses')) {
@@ -25,7 +25,7 @@ Chrome / Edge 安装：
 2. Chrome 打开 chrome://extensions，Edge 打开 edge://extensions。
 3. 开启开发者模式，点击“加载已解压的扩展程序”。
 4. 选择本目录下的 dist 文件夹。
-5. 刷新 B 站网页。主页属地需要在扩展弹窗点击“授权主页查询”。
+5. 刷新 B 站网页。动态、主页和 App 专栏查询需要在扩展弹窗点击“授权主页查询”。
 详细说明见 README.md。
 "@
 $taskInstall | Set-Content -LiteralPath (Join-Path $taskStage '安装说明.txt') -Encoding utf8

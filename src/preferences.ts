@@ -1,7 +1,7 @@
-export interface Preferences { commentsEnabled: boolean; profilesEnabled: boolean; }
+export interface Preferences { commentsEnabled: boolean; profilesEnabled: boolean; articlesEnabled: boolean; dynamicsEnabled: boolean; }
 export async function preferences(): Promise<Preferences> {
-  const stored = await chrome.storage.sync.get(['commentsEnabled', 'profilesEnabled']);
-  return { commentsEnabled: stored.commentsEnabled !== false, profilesEnabled: stored.profilesEnabled !== false };
+  const stored = await chrome.storage.sync.get(['commentsEnabled', 'profilesEnabled', 'articlesEnabled', 'dynamicsEnabled']);
+  return { commentsEnabled: stored.commentsEnabled !== false, profilesEnabled: stored.profilesEnabled !== false, articlesEnabled: stored.articlesEnabled !== false, dynamicsEnabled: stored.dynamicsEnabled !== false };
 }
 export const initializeStorage = (async () => {
   await chrome.storage.local.setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' });

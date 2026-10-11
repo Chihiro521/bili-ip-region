@@ -12,7 +12,7 @@ await build({
   sourcemap: true,
 });
 await build({
-  entryPoints: ['src/comment-page.ts', 'src/comment-bridge.ts', 'src/profile-page.ts'],
+  entryPoints: ['src/comment-page.ts', 'src/comment-bridge.ts', 'src/profile-page.ts', 'src/article-page.ts', 'src/dynamic-main.ts', 'src/dynamic-page.ts'],
   outdir: 'dist', bundle: true, format: 'iife', target: 'chrome121', sourcemap: true,
 });
 for (const name of ['manifest.json', 'popup.html', 'popup.css']) {
@@ -20,4 +20,4 @@ for (const name of ['manifest.json', 'popup.html', 'popup.css']) {
 }
 await cp('licenses', 'dist/licenses', { recursive: true });
 await cp('static/icons', 'dist/icons', { recursive: true });
-console.log('评论与主页版本已构建到 dist/');
+console.log('评论、动态、专栏与主页版本已构建到 dist/');

@@ -10,12 +10,21 @@ let current: Report | null = null;
 input.value = SAMPLES.join('\n');
 const commentsToggle = document.querySelector<HTMLInputElement>('#comments-enabled')!;
 const profilesToggle = document.querySelector<HTMLInputElement>('#profiles-enabled')!;
+const articlesToggle = document.querySelector<HTMLInputElement>('#articles-enabled')!;
+const dynamicsToggle = document.querySelector<HTMLInputElement>('#dynamics-enabled')!;
+const runtimeVersion = chrome.runtime.getManifest().version;
+document.querySelector('#version')!.textContent = `评论 · 动态 · 专栏 · 主页 · ${runtimeVersion}`;
 void chrome.runtime.sendMessage({ type: 'preferences:get' }).then(settings => {
   commentsToggle.checked = settings?.preferences?.commentsEnabled === true;
   profilesToggle.checked = settings?.preferences?.profilesEnabled === true;
+  articlesToggle.checked = settings?.preferences?.articlesEnabled === true;
+  dynamicsToggle.checked = settings?.preferences?.dynamicsEnabled === true;
+  if (settings?.version !== runtimeVersion) status.textContent = '页面与后台版本不一致，请在扩展管理页刷新后重新打开设置。';
 });
 commentsToggle.addEventListener('change', () => { void chrome.storage.sync.set({ commentsEnabled: commentsToggle.checked }); });
 profilesToggle.addEventListener('change', () => { void chrome.storage.sync.set({ profilesEnabled: profilesToggle.checked }); });
+articlesToggle.addEventListener('change', () => { void chrome.storage.sync.set({ articlesEnabled: articlesToggle.checked }); });
+dynamicsToggle.addEventListener('change', () => { void chrome.storage.sync.set({ dynamicsEnabled: dynamicsToggle.checked }); });
 const authButton = document.querySelector<HTMLButtonElement>('#profile-authorize')!;
 const clearAuthButton = document.querySelector<HTMLButtonElement>('#profile-clear')!;
 const authStatus = document.querySelector<HTMLElement>('#profile-status')!;
@@ -36,7 +45,11 @@ authButton.addEventListener('click', async () => {
   try {
     const allowed = await chrome.permissions.request({ origins: ['https://passport.bilibili.com/*'] });
     if (!allowed) { authStatus.textContent = '未取得登录接口权限，可以再次点击授权。'; return; }
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!/^https:\/\/(www|space|t)\.bilibili\.com\//.test(tab?.url ?? '')) {
+      const candidates = await chrome.tabs.query({ url: ['https://www.bilibili.com/*', 'https://space.bilibili.com/*', 'https://t.bilibili.com/*'] });
+      tab = candidates.sort((a, b) => (b.lastAccessed ?? 0) - (a.lastAccessed ?? 0))[0];
+    }
     if (!tab?.id) throw new Error('请先打开已登录的 B 站主页');
     const response = await chrome.runtime.sendMessage({ type: 'profile:auth:start', tabId: tab.id, confirmed: true });
     if (!response?.ok) throw new Error(response?.error || '主页授权失败');
@@ -51,12 +64,17 @@ clearAuthButton.addEventListener('click', async () => {
 if (location.hash === '#diagnostics') document.querySelector<HTMLDetailsElement>('#diagnostics')!.open = true;
 
 function render(report: Report): void {
+  if (report.version !== runtimeVersion) {
+    current = null; copyButton.disabled = true; results.replaceChildren();
+    status.textContent = `报告版本 ${report.version} 与当前 ${runtimeVersion} 不一致，请重新验证。`;
+    return;
+  }
   current = report;
   copyButton.disabled = false;
-  status.textContent = report.gatePassed ? '通过：至少两个发布者的动态返回有效属地。'
+  status.textContent = !report.results.length ? '专栏查询已完成。' : report.gatePassed ? '通过：至少两个发布者的动态返回有效属地。'
     : '尚未通过：未取得两个发布者的有效动态属地。';
   const session = report.webLoggedIn === true ? '已登录' : report.webLoggedIn === false ? '未登录' : '未确认';
-  document.querySelector('#session')!.textContent = `网页登录状态：${session}`;
+  document.querySelector('#session')!.textContent = `网页登录：${session} · App 会话：${report.appAuthorized ? '已授权' : '未授权'}`;
   results.replaceChildren();
   for (const result of report.results) {
     const row = document.createElement('article');
@@ -76,6 +94,14 @@ function render(report: Report): void {
     row.append(title, body);
     results.append(row);
   }
+  for (const article of report.articles ?? []) {
+    const row = document.createElement('article'), title = document.createElement('strong'), body = document.createElement('p');
+    title.textContent = `专栏 · ${article.target.kind}/${article.target.id}`;
+    body.textContent = [`CV ID：${article.articleId ?? '无'}`, `作者：${article.authorMid ?? '无'}`,
+      `发表属地：${article.region ?? '未返回'}`, `来源：${article.source === 'article' ? '文章接口' : article.source === 'app-article' ? 'App 文章详情' : '无'}`,
+      `结果：${article.error ?? ({ ok: '已取得属地', empty: '属地为空', 'not-article': '该内容不是专栏', disabled: '专栏开关已关闭', error: '请求失败' }[article.status])}`].join('\n');
+    row.append(title, body); results.append(row);
+  }
 }
 
 runButton.addEventListener('click', async () => {
@@ -83,7 +109,8 @@ runButton.addEventListener('click', async () => {
   status.textContent = '正在验证两种动态接口，请保持此页面打开……';
   try {
     const ids = input.value.split(/\r?\n/).map(value => value.trim()).filter(Boolean);
-    const response = await chrome.runtime.sendMessage({ type: 'probe:run', ids });
+    const articleUrl = document.querySelector<HTMLInputElement>('#article-url')!.value.trim();
+    const response = await chrome.runtime.sendMessage({ type: 'probe:run', ids, articleUrl });
     if (!response?.ok) throw new Error(response?.error || '扩展后台没有返回结果');
     render(response.report);
   } catch (error) {
@@ -102,6 +129,6 @@ copyButton.addEventListener('click', async () => {
 document.querySelector<HTMLAnchorElement>('#open')!.href = chrome.runtime.getURL('popup.html#diagnostics');
 void chrome.storage.local.get<{ lastProbe?: Report }>('lastProbe')
   .then(stored => {
-    if (stored.lastProbe?.version === '0.3.4') render(stored.lastProbe);
+    if (stored.lastProbe?.version === chrome.runtime.getManifest().version) render(stored.lastProbe);
     else if (stored.lastProbe) status.textContent = '检测到旧版本诊断报告，请重新验证。';
   });

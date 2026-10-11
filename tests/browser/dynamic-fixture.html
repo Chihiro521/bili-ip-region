@@ -1,0 +1,15 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>动态发表属地 · 合成验证</title>
+<style>:root{background:#fff;color:#18191c;font:15px system-ui}:root.dark{background:#181818;color:#eee}body{max-width:850px;margin:20px auto}.bili-dyn-item{padding:20px;border:1px solid #9499a0;margin:10px 0;border-radius:12px}.bili-dyn-item__desc{display:flex;align-items:center;font-size:13px;color:#9499a0}.bili-dyn-content__orig{margin:15px;padding:15px;background:#8882}.opus-module-author__pub{font-size:14px;color:#9499a0}</style>
+<h1>动态发表属地 · 合成数据验证</h1><div id="app"></div>
+<script>
+const makeItem = (suffix,mid='10',orig)=>({id_str:'1245177092906156'+suffix,modules:{module_author:{mid}},...(orig?{orig}: {})});
+window.fixtureDynamic={
+  add(suffix,mid='10',original,vue3=false){const item=makeItem(suffix,mid,original?makeItem(original,'20'):undefined),el=document.createElement('section');el.className='bili-dyn-item';el.dataset.fixture=suffix;
+    el.innerHTML='<h2>合成动态 '+suffix+'</h2><div class="bili-dyn-item__desc"><div class="bili-dyn-time">刚刚</div></div><div class="bili-dyn-content">'+(original?'<div class="bili-dyn-content__orig"><div class="bili-dyn-content__orig__author">原动态作者</div></div>':'')+'</div>';
+    if(vue3){el.__vueParentComponent={props:{data:item}};el.querySelector('.bili-dyn-time').__vueParentComponent={props:{id:item.id_str,author:item.modules.module_author}};}else{el.__vue__={$props:{data:item}};el.querySelector('.bili-dyn-time').__vue__={$props:{id:item.id_str,author:item.modules.module_author}};}
+    el.querySelector('.bili-dyn-content').__vue__={$props:{data:item}};document.querySelector('#app').append(el);return el;},
+  reuse(suffix,next,mid='10'){const el=document.querySelector('[data-fixture="'+suffix+'"]'),item=makeItem(next,mid);el.dataset.fixture=next;el.__vue__={$props:{data:item}};el.querySelector('.bili-dyn-time').__vue__={$props:{id:item.id_str,author:item.modules.module_author}};el.querySelector('.bili-dyn-time').firstChild.textContent='1分钟前';},
+  detail(suffix,stale=false){const id='1245177092906156'+suffix;history.pushState({},'', '/opus/'+id);document.querySelector('#app').innerHTML='<div class="opus-module-author"><h2>合成详情</h2><div class="opus-module-author__pub">10月5日</div></div>';document.querySelector('.opus-module-author').__vueParentComponent={props:{data:{mid:'10'}}};window.__INITIAL_STATE__={detail:{id_str:stale?'1245177092906156001':id,basic:{rid_str:id,article_type:0,comment_type:17,uid:'10'}}};}
+};
+if(location.pathname.includes('/opus/'))fixtureDynamic.detail(location.pathname.slice(-3));else{fixtureDynamic.add('001');fixtureDynamic.add('002','10');fixtureDynamic.add('003','10','004');fixtureDynamic.add('005','10',undefined,true);}
+</script></html>

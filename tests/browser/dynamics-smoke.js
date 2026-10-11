@@ -1,0 +1,65 @@
+async (page) => {
+  const worker=page.context().serviceWorkers().find(w=>w.url().endsWith('/background.js'));if(!worker)throw Error('扩展后台未加载');
+  const version=await worker.evaluate(()=>chrome.runtime.getManifest().version);
+  await worker.evaluate(async()=>{
+    self.fixtureOriginalFetch=self.fetch;self.fixtureDynamicCalls={};self.fixtureActiveRequests=0;self.fixtureMaxRequests=0;
+    await chrome.storage.local.remove('profileAuth');await chrome.storage.session.remove('dynamicCache');await chrome.storage.sync.set({dynamicsEnabled:true,articlesEnabled:true,profilesEnabled:false});
+    const join=(...parts)=>{const out=new Uint8Array(parts.reduce((n,p)=>n+p.length,0));let i=0;for(const p of parts){out.set(p,i);i+=p.length;}return out;};
+    const vi=value=>{let n=BigInt(value),a=[];do{const b=Number(n&127n);n>>=7n;a.push(b|(n?128:0));}while(n);return Uint8Array.from(a);};
+    const bytes=(f,p)=>join(vi(f*8+2),vi(p.length),p),text=(f,t)=>bytes(f,new TextEncoder().encode(t)),num=(f,n)=>join(vi(f*8),vi(n));
+    const readId=(input,method)=>{const b=new Uint8Array(input);let i=5;const read=()=>{let n=0n,s=0n;while(i<b.length){const v=b[i++];n|=BigInt(v&127)<<s;if(!(v&128))return n;s+=7n;}throw Error('fixture truncated');};while(i<b.length){const tag=read(),f=Number(tag>>3n),w=Number(tag&7n);if(w===2){const l=Number(read()),v=b.slice(i,i+l);i+=l;if(f===2)return new TextDecoder().decode(v);}else if(w===0){const v=read();if(f===2)return v.toString();}else throw Error('fixture wire');}throw Error('no ID');};
+    self.fetch=async function(input,init){
+      const url=new URL(String(input));if(!url.pathname.startsWith('/bilibili.app.dynamic.v2.'))return self.fixtureOriginalFetch(input,init);
+      if(new Headers(init.headers).get('authorization')!=='identify_v1 fixture-only-access-token')throw Error('fixture authorization absent');
+      const method=url.pathname.split('/').at(-1),id=readId(init.body,method),suffix=id.slice(-3);self.fixtureDynamicCalls[id]=(self.fixtureDynamicCalls[id]??0)+1;
+      self.fixtureActiveRequests++;self.fixtureMaxRequests=Math.max(self.fixtureMaxRequests,self.fixtureActiveRequests);
+      await new Promise(resolve=>setTimeout(resolve,suffix==='006'?900:40));self.fixtureActiveRequests--;
+      if(suffix==='008')return new Response('failed',{status:503});
+      const region=({'001':'河北','002':'浙江','003':'上海','004':'广东','005':'四川','006':'福建','007':'重庆','010':'北京'})[suffix]??(Number(suffix)>=20?'江苏':null);
+      const mid=suffix==='004'?'20':suffix==='009'?'99':'10';
+      const returned=suffix==='011'?'1245177092906156012':id;
+      const item=join(...(method==='OpusDetail'?[num(1,returned)]:[]),bytes(method==='DynDetail'?3:4,bytes(2,join(num(1,mid),...(region?[text(14,'IP属地：'+region)]:[])))),bytes(method==='DynDetail'?4:5,text(1,returned)));
+      const payload=bytes(1,item),header=new Uint8Array(5);new DataView(header.buffer).setUint32(1,payload.length);return new Response(join(header,payload),{headers:{'grpc-status':'0'}});
+    };
+  });
+  await page.route('https://t.bilibili.com/**',route=>route.fulfill({contentType:'text/html',body:__FIXTURE_HTML__}));
+  await page.route('https://space.bilibili.com/**',route=>route.fulfill({contentType:'text/html',body:__FIXTURE_HTML__}));
+  await page.route('https://www.bilibili.com/opus/**',route=>route.fulfill({contentType:'text/html',body:__FIXTURE_HTML__}));
+  await page.goto('https://t.bilibili.com/');
+  const labels=page.locator('[data-bili-ip-region-body]'),checks={};
+  await page.locator('[data-bili-ip-content]').first().waitFor();
+  checks.noAuthorizationNoLabels=await labels.count()===0;
+  await worker.evaluate(async()=>{await chrome.storage.local.set({profileDeviceId:'fixture-device',profileAuth:{accessToken:'fixture-only-access-token',ownerUid:'999',expiresAt:Date.now()+3600000}});const tabs=await chrome.tabs.query({url:'https://t.bilibili.com/*'});await Promise.all(tabs.map(t=>chrome.tabs.sendMessage(t.id,{type:'profile:state-changed'})));});
+  await labels.filter({hasText:'四川'}).waitFor();await labels.filter({hasText:'广东'}).waitFor();
+  checks.vue2AndVue3Feed=await labels.count()===5;
+  checks.exactStringIds=await labels.filter({hasText:'河北'}).getAttribute('data-content-id')==='1245177092906156001';
+  checks.sameAuthorDifferentPosts=await labels.filter({hasText:'浙江'}).getAttribute('data-author-mid')==='10';
+  checks.forwardAndOriginal=await labels.filter({hasText:'上海'}).getAttribute('data-content-role')==='post'&&await labels.filter({hasText:'广东'}).getAttribute('data-content-role')==='original';
+  checks.afterTime=await labels.filter({hasText:'河北'}).evaluate(el=>el.previousElementSibling.matches('.bili-dyn-time'));
+  await page.evaluate(()=>fixtureDynamic.reuse('001','010'));await labels.filter({hasText:'北京'}).waitFor();
+  checks.reusedNodeRemovesOld=await labels.filter({hasText:'河北'}).count()===0;
+  await page.evaluate(()=>document.documentElement.classList.add('dark'));
+  checks.themeAndSize=await labels.filter({hasText:'北京'}).evaluate(el=>{const s=getComputedStyle(el);return s.color==='rgb(255, 255, 255)'&&s.backgroundColor==='rgb(97, 102, 109)'&&s.fontSize==='13px';});
+  await worker.evaluate(()=>chrome.storage.sync.set({dynamicsEnabled:false}));await labels.first().waitFor({state:'detached'});checks.switchOff=await labels.count()===0;
+  await worker.evaluate(()=>chrome.storage.sync.set({dynamicsEnabled:true}));await labels.filter({hasText:'北京'}).waitFor();
+  checks.switchOnAndCache=await worker.evaluate(()=>self.fixtureDynamicCalls['1245177092906156010']===1);
+  for(const suffix of ['008','009','011','012']){await page.evaluate(s=>fixtureDynamic.add(s),suffix);await worker.evaluate(async s=>{for(let i=0;i<100&&!self.fixtureDynamicCalls['1245177092906156'+s];i++)await new Promise(r=>setTimeout(r,30));},suffix);}
+  await worker.evaluate(()=>new Promise(r=>setTimeout(r,400)));
+  checks.emptyFailureWrongUidAndId=await page.locator('[data-fixture="008"] '+ '[data-bili-ip-region-body], [data-fixture="009"] [data-bili-ip-region-body], [data-fixture="011"] [data-bili-ip-region-body], [data-fixture="012"] [data-bili-ip-region-body]').count()===0;
+  await page.evaluate(()=>fixtureDynamic.add('006'));await page.locator('[data-fixture="006"]').scrollIntoViewIfNeeded();await worker.evaluate(async()=>{for(let i=0;i<100&&!self.fixtureDynamicCalls['1245177092906156006'];i++)await new Promise(r=>setTimeout(r,30));});
+  await page.evaluate(()=>fixtureDynamic.reuse('006','007'));await labels.filter({hasText:'重庆'}).waitFor();await worker.evaluate(()=>new Promise(r=>setTimeout(r,1100)));
+  checks.staleResponseNotReused=await labels.filter({hasText:'福建'}).count()===0&&await labels.filter({hasText:'重庆'}).count()===1;
+  await page.evaluate(()=>{for(let i=20;i<28;i++)fixtureDynamic.add(String(i).padStart(3,'0'));});
+  await page.locator('[data-fixture="027"]').scrollIntoViewIfNeeded();
+  await labels.filter({hasText:'江苏'}).first().waitFor();
+  checks.scrollLoadedCards=await labels.filter({hasText:'江苏'}).count()>0;
+  checks.concurrencyAtMostThree=await worker.evaluate(()=>self.fixtureMaxRequests<=3);
+  await page.goto('https://space.bilibili.com/100/dynamic');await labels.filter({hasText:'广东'}).waitFor();checks.spaceFeed=await labels.count()===5;
+  await page.goto('https://www.bilibili.com/opus/1245177092906156002');await labels.filter({hasText:'浙江'}).waitFor();checks.opusDetail=await labels.count()===1;
+  await page.evaluate(()=>fixtureDynamic.detail('010',true));await labels.waitFor({state:'detached'});checks.staleSsrDoesNotBind=true;
+  await page.evaluate(()=>fixtureDynamic.detail('010'));await labels.filter({hasText:'北京'}).waitFor();checks.spaDetail=await labels.count()===1;
+  await worker.evaluate(async()=>{await chrome.storage.local.remove('profileAuth');await chrome.storage.session.remove('dynamicCache');const tabs=await chrome.tabs.query({url:'https://www.bilibili.com/opus/*'});await Promise.all(tabs.map(t=>chrome.tabs.sendMessage(t.id,{type:'profile:state-changed'})));});
+  await labels.waitFor({state:'detached'});checks.clearAuthorizationRemoves=true;
+  await worker.evaluate(()=>{self.fetch=self.fixtureOriginalFetch;delete self.fixtureOriginalFetch;});
+  const report={version,source:'isolated browser; actual extension; synthetic dynamic/auth data',checks,allPassed:Object.values(checks).every(Boolean),realDynamicRegionVerified:false};if(!report.allPassed)throw Error(JSON.stringify(report));return report;
+}

@@ -86,6 +86,11 @@ export function requestBody(method: Method, id: string): Uint8Array {
   return grpcFrame(concat(identity, intField(10, 8n)));
 }
 
+export function articleRequestBody(cv: string): Uint8Array {
+  requestBody('OpusDetail', cv);
+  return grpcFrame(concat(intField(1, 1n), intField(2, BigInt(cv)), intField(10, 8n)));
+}
+
 export type Decoded = {
   returnedId: string | null;
   authorMid: string | null;
@@ -98,7 +103,7 @@ export type Decoded = {
   locationSource: 'author' | 'copyright' | null;
 };
 
-export function decodeResponse(method: Method, frame: Uint8Array): Decoded {
+function replyItem(frame: Uint8Array): Field[] {
   if (frame.length < 5) throw new Error('gRPC 响应没有完整消息帧');
   if (frame[0] !== 0) throw new Error('gRPC 返回压缩帧，当前原型只接受 identity');
   const length = new DataView(frame.buffer, frame.byteOffset, frame.byteLength).getUint32(1);
@@ -106,7 +111,11 @@ export function decodeResponse(method: Method, frame: Uint8Array): Decoded {
   const outer = fields(frame.subarray(5, length + 5));
   const itemBytes = outer.find(field => field.number === 1 && field.wire === 2)?.bytes;
   if (!itemBytes) throw new Error('响应缺少动态主体');
-  const item = fields(itemBytes);
+  return fields(itemBytes);
+}
+
+export function decodeResponse(method: Method, frame: Uint8Array): Decoded {
+  const item = replyItem(frame);
   const extendNumber = method === 'DynDetail' ? 4 : 5;
   const extendBytes = item.find(field => field.number === extendNumber && field.wire === 2)?.bytes;
   const extendedId = extendBytes
@@ -118,6 +127,25 @@ export function decodeResponse(method: Method, frame: Uint8Array): Decoded {
   if (opusIdText && extendedIdText && opusIdText !== extendedIdText) {
     throw new Error('Opus ID 与动态 ID 不一致');
   }
+  return decodeItem(method, item, extendedIdText || opusIdText);
+}
+
+export function decodeArticleResponse(frame: Uint8Array, cv: string, expectedOpusId?: string): Decoded {
+  const item = replyItem(frame);
+  const type = item.find(field => field.number === 2 && field.wire === 0)?.integer;
+  const oid = item.find(field => field.number === 3 && field.wire === 0)?.integer?.toString();
+  if (type !== 1n || oid !== cv) throw new Error('返回的专栏类型或 CV ID 与请求不一致');
+  const opusId = item.find(field => field.number === 1 && field.wire === 0)?.integer;
+  const extend = item.find(field => field.number === 5 && field.wire === 2)?.bytes;
+  const extendedId = extend ? fields(extend).find(field => field.number === 1 && field.wire === 2)?.bytes : undefined;
+  const ids = [opusId && opusId > 0n ? opusId.toString() : null, extendedId ? decoder.decode(extendedId) : null].filter(Boolean);
+  if (new Set(ids).size > 1 || (expectedOpusId && (!ids.length || ids.some(id => id !== expectedOpusId)))) {
+    throw new Error('返回的 Opus ID 与当前专栏不一致');
+  }
+  return decodeItem('OpusDetail', item, ids[0] ?? null);
+}
+
+function decodeItem(method: Method, item: Field[], returnedId: string | null): Decoded {
   const moduleNumber = method === 'DynDetail' ? 3 : 4;
   let author: Field[] = [];
   const footerLocations: string[] = [];
@@ -148,7 +176,7 @@ export function decodeResponse(method: Method, frame: Uint8Array): Decoded {
   const rawLocation = footerLocation ?? authorLocation;
   const location = normalize(rawLocation);
   return {
-    returnedId: extendedIdText || opusIdText,
+    returnedId,
     authorMid: authorMid?.toString() ?? null,
     publishedAt: time ? decoder.decode(time) : null,
     rawLocation, location,

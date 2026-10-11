@@ -1,0 +1,14 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>专栏属地 · 合成验证</title>
+<style>:root{background:#fff;color:#18191c;font:15px system-ui}:root.dark{background:#181818;color:#eee}body{max-width:900px;margin:40px auto}.article-detail,.opus-module-author{padding:25px;border:1px solid #9499a0;border-radius:12px}.publish-text,.opus-module-author__pub{color:#9499a0;font-size:14px}p{line-height:1.8}</style>
+<h1>专栏发表属地 · 合成数据验证</h1><p>用于检查 CV / Opus 对应、发表地区、缓存和节点复用。</p><div id="app"></div>
+<script>
+document.cookie='bili_jct='+ '0'.repeat(32) +';path=/;Secure;SameSite=Lax';
+window.fixtureArticle={
+  render(){const cv=location.pathname.includes('/read/cv');document.querySelector('#app').innerHTML=cv
+    ? '<div class="article-detail"><h2>合成专栏</h2><span class="publish-text">10月5日</span><span> 55浏览</span></div>'
+    : '<div class="opus-module-author"><h2>合成 Opus 专栏</h2><div class="opus-module-author__pub">10月5日 55浏览</div></div>';
+    if(!cv){const id=location.pathname.split('/').at(-1),articleId=id.slice(-3);window.__INITIAL_STATE__={detail:{id_str:id,basic:{rid_str:articleId==='910'?'0':articleId,comment_type:articleId==='910'?11:12,uid:'10'}}};document.querySelector('.opus-module-author').__vueParentComponent={props:{data:{mid:'10'}}};}
+  },
+  switch(path){history.pushState({},'',path);this.render();}
+};fixtureArticle.render();
+</script></html>

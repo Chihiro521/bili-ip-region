@@ -1,30 +1,14 @@
-import { MOBILE_UA, runProbe, SAMPLES } from './probe.ts';
+import { runProbe, SAMPLES } from './probe.ts';
 import { parseDynamicId } from './protocol.ts';
 import { initializeStorage, preferences } from './preferences.ts';
-import { authorizeProfile, clearProfileCredential, getProfile, profileAuthStatus } from './profile-background.ts';
+import { authorizeProfile, clearProfileCredential, getProfile, profileAuthStatus, contentAuthorization } from './profile-background.ts';
 import { spaceUid } from './profile-data.ts';
-
-async function configureHeaders(): Promise<void> {
-  await chrome.declarativeNetRequest.updateDynamicRules({
-    removeRuleIds: [1],
-    addRules: [{
-      id: 1, priority: 1,
-      action: {
-        type: chrome.declarativeNetRequest.RuleActionType.MODIFY_HEADERS,
-        requestHeaders: [{
-          header: 'user-agent', operation: chrome.declarativeNetRequest.HeaderOperation.SET, value: MOBILE_UA,
-        }, {
-          header: 'origin', operation: chrome.declarativeNetRequest.HeaderOperation.REMOVE,
-        }],
-      },
-      condition: {
-        regexFilter: '^https://(app\\.bilibili\\.com|grpc\\.biliapi\\.net)/bilibili\\.app\\.dynamic\\.v2\\.(Dynamic/DynDetail|Opus/OpusDetail)$',
-        initiatorDomains: [chrome.runtime.id],
-        resourceTypes: [chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST],
-      },
-    }],
-  });
-}
+import { articleTarget, sameArticle } from './article-data.ts';
+import { getArticle } from './article-background.ts';
+import { configureHeaders } from './request-headers.ts';
+import { dynamicPage } from './dynamic-data.ts';
+import { uidString } from './profile-data.ts';
+import { getDynamic } from './dynamic-background.ts';
 
 let activeProbe: Promise<unknown> | null = null;
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -37,12 +21,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       error: error instanceof Error ? error.message : '请求失败' }));
   };
   if (message?.type === 'preferences:get' && (popup || page)) {
-    respond(initializeStorage.then(async () => ({ preferences: await preferences() }))); return true;
+    respond(initializeStorage.then(async () => ({ preferences: await preferences(), version: chrome.runtime.getManifest().version }))); return true;
   }
   // SPA 切换时 sender.url 仍是脚本初次注入的 URL，tab.url 才是当前主页。
   if (message?.type === 'profile:get' && page && sender.frameId === 0 && typeof message.uid === 'string'
     && spaceUid(sender.tab?.url ?? sender.url ?? '') === message.uid) {
     respond(initializeStorage.then(async () => ({ result: await getProfile(message.uid) }))); return true;
+  }
+  if (message?.type === 'article:get' && page && sender.frameId === 0) {
+    const url = sender.tab?.url ?? sender.url ?? '', current = articleTarget(url);
+    const target = sameArticle(current, message.target) ? current : dynamicPage(url) && message.target?.kind === 'opus' && uidString(message.target.id)
+      ? { kind: 'opus' as const, id: message.target.id } : null;
+    if (!target) return;
+    respond(initializeStorage.then(async () => ({ result: await getArticle(target) }))); return true;
+  }
+  if (message?.type === 'dynamic:get' && page && sender.frameId === 0 && dynamicPage(sender.tab?.url ?? sender.url ?? '')
+    && uidString(message.id) && (message.authorMid === null || uidString(message.authorMid))) {
+    respond(initializeStorage.then(async () => ({ result: await getDynamic(message.id, message.authorMid) }))); return true;
   }
   if (popup && message?.type === 'profile:status') {
     respond(initializeStorage.then(async () => ({ auth: await profileAuthStatus() }))); return true;
@@ -58,7 +53,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!activeProbe) {
     activeProbe = (async () => {
       const values = Array.isArray(message.ids) ? message.ids : SAMPLES;
-      if (!values.length || values.length > 4 || values.some((value: unknown) => typeof value !== 'string')) {
+      const article = typeof message.articleUrl === 'string' && message.articleUrl.trim() ? articleTarget(message.articleUrl.trim()) : null;
+      if (message.articleUrl && !article) throw new Error('专栏请输入完整的 cv 或 opus 网页链接');
+      if ((!values.length && !article) || values.length > 4 || values.some((value: unknown) => typeof value !== 'string')) {
         throw new Error('每次请输入 1–4 条动态链接或 ID');
       }
       const ids = [...new Set(values.map((value: string) => parseDynamicId(value)))] as string[];
@@ -67,7 +64,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const deviceId = typeof stored.probeDeviceId === 'string' ? stored.probeDeviceId
         : `XU${crypto.randomUUID().replaceAll('-', '').toUpperCase()}`;
       await chrome.storage.local.set({ probeDeviceId: deviceId });
-      const report = await runProbe(ids, deviceId);
+      const authorization = await contentAuthorization();
+      const report = await runProbe(ids, authorization?.deviceId ?? deviceId, authorization?.accessToken);
+      if (article) report.articles = [await getArticle(article)];
       await chrome.storage.local.set({ lastProbe: report });
       return report;
     })().finally(() => { activeProbe = null; });

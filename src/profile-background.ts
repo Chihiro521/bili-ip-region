@@ -6,6 +6,7 @@ import { preferences } from './preferences.ts';
 const AUTH_KEY = 'profileAuth';
 let authTask: Promise<void> | null = null;
 let generation = 0;
+export function contentAuthGeneration(): number { return generation; }
 const pending = new Map<string, Promise<ProfileResult>>();
 let headerTask: Promise<void> | null = null;
 let cacheWrite: Promise<void> = Promise.resolve();
@@ -34,10 +35,18 @@ async function credential(): Promise<ProfileCredential | null> {
   return value && typeof value.accessToken === 'string' && uidString(value.ownerUid) && typeof value.expiresAt === 'number'
     ? value as ProfileCredential : null;
 }
+// 仅供后台请求复用用户已授权的会话，不返回给页面脚本。
+export async function contentAuthorization(): Promise<{ accessToken: string; deviceId: string } | null> {
+  const requestedGeneration = generation;
+  const auth = await credential();
+  if (!auth || auth.expiresAt <= Date.now() + 60000) return null;
+  const stored = await chrome.storage.local.get('profileDeviceId');
+  return requestedGeneration === generation && typeof stored.profileDeviceId === 'string' ? { accessToken: auth.accessToken, deviceId: stored.profileDeviceId } : null;
+}
 async function announce(): Promise<void> {
   generation++;
-  await chrome.storage.session.remove('profileCache');
-  const tabs = await chrome.tabs.query({ url: 'https://space.bilibili.com/*' });
+  await chrome.storage.session.remove(['profileCache', 'dynamicCache']);
+  const tabs = await chrome.tabs.query({ url: ['https://space.bilibili.com/*', 'https://www.bilibili.com/*', 'https://t.bilibili.com/*'] });
   await Promise.allSettled(tabs.flatMap(tab => tab.id ? [chrome.tabs.sendMessage(tab.id, { type: 'profile:state-changed' }, { frameId: 0 })] : []));
 }
 export async function clearProfileCredential(): Promise<void> { await chrome.storage.local.remove(AUTH_KEY); await announce(); }

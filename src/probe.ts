@@ -1,5 +1,6 @@
 import { concat, decodeResponse, intField, requestBody, stringField } from './protocol.ts';
 import type { Decoded, Method } from './protocol.ts';
+import type { ArticleResult } from './article-data.ts';
 
 export const MOBILE_UA = 'Dalvik/2.1.0 (Linux; U; Android 11) 9.14.0 mobi_app/android build/9140400 grpc-java-cronet/1.36.1';
 export const SAMPLES: string[] = [];
@@ -12,20 +13,22 @@ export type ProbeResult = {
   decoded: Decoded | null;
 };
 export type Report = {
-  version: '0.3.4'; testedAt: string; browser: string;
+  version: string; testedAt: string; browser: string; appAuthorized: boolean;
   webLoggedIn: boolean | null; credentialsMode: 'include';
-  results: ProbeResult[]; successfulAuthorCount: number; gatePassed: boolean;
+  results: ProbeResult[]; successfulAuthorCount: number; gatePassed: boolean; articles?: ArticleResult[];
 };
 
 function base64(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes));
 }
 
-export function metadataHeaders(deviceId: string): Record<string, string> {
+export function metadataHeaders(deviceId: string, accessToken?: string): Record<string, string> {
   return {
     'content-type': 'application/grpc',
     'grpc-accept-encoding': 'identity',
+    ...(accessToken ? { authorization: `identify_v1 ${accessToken}` } : {}),
     'x-bili-metadata-bin': base64(concat(
+      ...(accessToken ? [stringField(1, accessToken)] : []),
       stringField(2, 'android'), stringField(3, 'phone'), intField(4, 9140400n),
       stringField(5, 'yingyongbao'), stringField(6, deviceId), stringField(7, 'android'),
     )),
@@ -42,7 +45,7 @@ export function metadataHeaders(deviceId: string): Record<string, string> {
   };
 }
 
-export async function probeOne(id: string, method: Method, host: typeof HOSTS[number], deviceId: string): Promise<ProbeResult> {
+export async function probeOne(id: string, method: Method, host: typeof HOSTS[number], deviceId: string, accessToken?: string): Promise<ProbeResult> {
   const service = method === 'DynDetail' ? 'Dynamic' : 'Opus';
   const endpoint = `https://${host}/bilibili.app.dynamic.v2.${service}/${method}`;
   const startedAt = performance.now();
@@ -54,7 +57,7 @@ export async function probeOne(id: string, method: Method, host: typeof HOSTS[nu
   try {
     const response = await fetch(endpoint, {
       method: 'POST', credentials: 'include',
-      headers: metadataHeaders(deviceId),
+      headers: metadataHeaders(deviceId, accessToken),
       body: requestBody(method, id) as Uint8Array<ArrayBuffer>,
       signal: AbortSignal.timeout(12000),
     });
@@ -82,7 +85,7 @@ export function countSuccessfulAuthors(results: ProbeResult[]): number {
   ).map(result => result.decoded!.authorMid)).size;
 }
 
-export async function runProbe(ids: string[], deviceId: string): Promise<Report> {
+export async function runProbe(ids: string[], deviceId: string, accessToken?: string): Promise<Report> {
   let webLoggedIn: boolean | null = null;
   try {
     const response = await fetch('https://api.bilibili.com/x/web-interface/nav', {
@@ -94,11 +97,12 @@ export async function runProbe(ids: string[], deviceId: string): Promise<Report>
   const results: ProbeResult[] = [];
   // 有限顺序请求；每个样本、端点只尝试一次，避免循环重试。
   for (const id of ids) for (const host of HOSTS) for (const method of METHODS) {
-    results.push(await probeOne(id, method, host, deviceId));
+    results.push(await probeOne(id, method, host, deviceId, accessToken));
   }
   const successfulAuthorCount = countSuccessfulAuthors(results);
   return {
-    version: '0.3.4', testedAt: new Date().toISOString(), browser: navigator.userAgent,
+    version: chrome.runtime.getManifest().version, testedAt: new Date().toISOString(), browser: navigator.userAgent,
+    appAuthorized: !!accessToken,
     webLoggedIn, credentialsMode: 'include', results, successfulAuthorCount,
     gatePassed: successfulAuthorCount >= 2,
   };

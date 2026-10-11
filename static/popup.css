@@ -10,7 +10,7 @@ h1 { margin: 10px 0; font-size: 24px; }
 details { margin-top: 24px; border-top: 1px solid #d4d9e5; padding-top: 18px; }
 summary { cursor: pointer; font-size: 14px; }
 label { display: block; margin: 22px 0 8px; font-size: 13px; }
-textarea { box-sizing: border-box; width: 100%; border: 1px solid #d4d9e5; background: #fff; color: inherit; border-radius: 10px; padding: 12px; resize: vertical; font: 13px/1.7 monospace; }
+textarea, input[type="url"] { box-sizing: border-box; width: 100%; border: 1px solid #d4d9e5; background: #fff; color: inherit; border-radius: 10px; padding: 12px; resize: vertical; font: 13px/1.7 monospace; }
 .actions { display: flex; gap: 10px; margin: 14px 0; }
 button { border: 0; border-radius: 8px; padding: 10px 16px; color: #fff; background: #e85a85; font: inherit; font-size: 14px; cursor: pointer; }
 button.secondary { color: #46536c; background: #e6eaf2; }
@@ -23,7 +23,7 @@ article strong { font-size: 13px; }
 article p { white-space: pre-wrap; overflow-wrap: anywhere; color: #64718b; font: 12px/1.8 monospace; margin: 9px 0 0; }
 @media (prefers-color-scheme: dark) {
   :root { background: #181b25; color: #e5e9f3; }
-  textarea, article { background: #242936; border-color: #394054; }
+  textarea, input[type="url"], article { background: #242936; border-color: #394054; }
   .intro, .muted, article p, .badge { color: #a5afc4; }
   a { color: #ff8bb0; }
   button.secondary { background: #333c50; color: #dbe2f1; }
