@@ -1,14 +1,26 @@
-<p align="center"><img src="docs/assets/logo.png" width="96" height="96" alt="B站 IP 属地 Logo"></p>
+<p align="center">
+  <img src="docs/assets/logo.png" width="96" height="96" alt="B站 IP 属地 Logo">
+</p>
 
-# B站网页 IP 属地
+<h1 align="center">B站网页 IP 属地</h1>
 
-**简体中文** · [English](README.en.md)
+<p align="center">在 B 站网页中显示评论、楼中楼、动态、专栏与 UP 主个人主页的 IP 属地。</p>
+<p align="center"><strong>Chrome / Edge · 0.4.2 预览版</strong></p>
 
-在 B 站网页中显示评论、楼中楼、动态、专栏和 UP 主个人主页的 IP 属地。支持 Chrome / Edge，使用 Manifest V3 和 TypeScript。
+<p align="center">
+  <strong>简体中文</strong> · <a href="README.en.md">English</a><br>
+  <a href="https://github.com/Chihiro521/bili-ip-region/releases/latest">下载最新版</a> ·
+  <a href="CHANGELOG.md">更新记录</a> ·
+  <a href="LICENSE">MIT 许可</a>
+</p>
 
-[下载最新版](https://github.com/Chihiro521/bili-ip-region/releases/latest) · [更新记录](CHANGELOG.md) · [MIT 许可](LICENSE)
-
-当前版本：**0.4.2 预览版**。
+<p align="center">
+  <a href="#实际效果">实际效果</a> ·
+  <a href="#安装">安装</a> ·
+  <a href="#授权动态与个人主页查询">首次授权</a> ·
+  <a href="#未显示时">常见问题</a> ·
+  <a href="#开发">开发</a>
+</p>
 
 ## 功能
 
@@ -22,9 +34,41 @@
 
 四个显示开关默认开启。接口返回非空地区且内容 ID / UID 对应时显示；空字段、失败或不对应时移除标签。支持滚动加载、页面切换、节点复用和主题切换。
 
-个人主页胶囊样式（合成数据示例）：
+## 实际效果
 
-![主页属地胶囊示例](docs/assets/profile-badge.png)
+以下截图来自真实 B 站网页，部分昵称已遮挡。点击图片可查看原图。
+
+### 个人主页
+
+用户名旁显示灰底白字的属地胶囊，示例为「IP属地：上海」。
+
+<p>
+  <a href="docs/assets/profile.png"><img src="docs/assets/profile.png" width="694" alt="真实 UP 主个人主页：用户名旁显示 IP属地：上海"></a>
+</p>
+
+### 评论与楼中楼
+
+地区嵌入评论的时间行，楼中楼按每条回复分别显示。图中回复显示「广东」。
+
+<p>
+  <a href="docs/assets/comments.png"><img src="docs/assets/comments.png" width="840" alt="真实评论区与楼中楼：回复的发表时间后显示广东"></a>
+</p>
+
+### 动态与转发
+
+转发动态和原动态各有自己的属地标签；图中两条内容均为「上海」。
+
+<p>
+  <a href="docs/assets/dynamic-repost.png"><img src="docs/assets/dynamic-repost.png" width="840" alt="真实动态转发：外层动态与原动态分别显示上海属地胶囊"></a>
+</p>
+
+### 专栏文章
+
+文章时间旁显示属地胶囊，示例为「IP属地：北京」。
+
+<p>
+  <a href="docs/assets/article.png"><img src="docs/assets/article.png" width="700" alt="真实专栏文章：文章时间旁显示 IP属地：北京"></a>
+</p>
 
 ## 安装
 
@@ -70,7 +114,7 @@
 
 ## 开发
 
-需要 Node.js 24 或更新版本。Windows 可使用 PowerShell 7。
+使用 Manifest V3 和 TypeScript。开发需要 Node.js 24 或更新版本，Windows 可使用 PowerShell 7。
 
 ```powershell
 npm ci

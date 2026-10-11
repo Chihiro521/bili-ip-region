@@ -1,14 +1,28 @@
-<p align="center"><img src="docs/assets/logo.png" width="96" height="96" alt="Bilibili IP Region Logo"></p>
+<p align="center">
+  <img src="docs/assets/logo.png" width="96" height="96" alt="Bilibili IP Region Logo">
+</p>
 
-# Bilibili IP Region
+<h1 align="center">Bilibili IP Region</h1>
 
-[简体中文](README.md) · **English**
+<p align="center">Display IP regions for comments, nested replies, posts, articles, and creators' profile pages on Bilibili.</p>
+<p align="center"><strong>Chrome / Edge · 0.4.2 preview</strong></p>
 
-Display IP regions for comments, nested replies, posts, articles, and creators' profile pages on the Bilibili website. Supports Chrome / Edge and uses Manifest V3 with TypeScript.
+<p align="center">
+  <a href="README.md">简体中文</a> · <strong>English</strong><br>
+  <a href="https://github.com/Chihiro521/bili-ip-region/releases/latest">Download the latest release</a> ·
+  <a href="CHANGELOG.md">Changelog</a> ·
+  <a href="LICENSE">MIT License</a>
+</p>
 
-[Download the latest release](https://github.com/Chihiro521/bili-ip-region/releases/latest) · [Changelog](CHANGELOG.md) · [MIT License](LICENSE)
+<p align="center">
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#installation">Installation</a> ·
+  <a href="#authorize-post-and-profile-queries">Authorization</a> ·
+  <a href="#if-a-label-does-not-appear">Troubleshooting</a> ·
+  <a href="#development">Development</a>
+</p>
 
-Current version: **0.4.2 preview**. The extension interface is in Chinese; the instructions below include its exact button labels.
+The extension interface is in Chinese; the instructions below include its exact button labels.
 
 ## Features
 
@@ -22,9 +36,41 @@ Current version: **0.4.2 preview**. The extension interface is in Chinese; the i
 
 All four display switches are enabled by default. A label appears when the API returns a nonempty region and the content ID / UID matches. Empty fields, failed requests, or mismatched IDs remove the label. The extension handles scrolling, page navigation, reused nodes, and theme changes.
 
-Profile capsule style, using synthetic data:
+## Screenshots
 
-![Profile region capsule example](docs/assets/profile-badge.png)
+These screenshots show real Bilibili pages, with some usernames redacted. Click an image to view it at full size.
+
+### Creator profile
+
+A white-on-gray region capsule appears beside the username. This example shows “IP属地：上海” (IP region: Shanghai).
+
+<p>
+  <a href="docs/assets/profile.png"><img src="docs/assets/profile.png" width="694" alt="Real creator profile with an IP region: Shanghai capsule beside the username"></a>
+</p>
+
+### Comments and nested replies
+
+Regions appear in the comment timestamp row, with each nested reply using its own publication region. The reply shown here displays “广东” (Guangdong).
+
+<p>
+  <a href="docs/assets/comments.png"><img src="docs/assets/comments.png" width="840" alt="Real comments and nested replies with Guangdong after the reply timestamp"></a>
+</p>
+
+### Posts and reposts
+
+The repost and its original post each have a separate region label. Both pieces of content in this example show “上海” (Shanghai).
+
+<p>
+  <a href="docs/assets/dynamic-repost.png"><img src="docs/assets/dynamic-repost.png" width="840" alt="Real repost showing separate Shanghai region capsules for the repost and original post"></a>
+</p>
+
+### Articles
+
+A region capsule appears beside the article timestamp. This example shows “IP属地：北京” (IP region: Beijing).
+
+<p>
+  <a href="docs/assets/article.png"><img src="docs/assets/article.png" width="700" alt="Real article with an IP region: Beijing capsule beside its timestamp"></a>
+</p>
 
 ## Installation
 
@@ -72,7 +118,7 @@ Expand **动态与专栏查询诊断** (Post and article query diagnostics), and
 
 ## Development
 
-Requires Node.js 24 or newer. On Windows, use PowerShell 7 for packaging.
+Built with Manifest V3 and TypeScript. Development requires Node.js 24 or newer. On Windows, use PowerShell 7 for packaging.
 
 ```powershell
 npm ci
