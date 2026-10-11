@@ -1,0 +1,41 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>评论行内显示测试</title>
+<style>
+:root { --muted: #9499a0; color: #18191c; background: #fff; font: 15px system-ui; }
+:root.dark { --muted: #aaa; color: #eee; background: #181818; }
+body { max-width: 760px; margin: 40px auto; } h1 { font-size: 22px; }
+.card { border-bottom: 1px solid var(--muted); padding: 20px 0; }
+.info,.reply-info,.sub-reply-info { color: var(--muted); font-size: 13px; margin-top: 12px; }
+.sub-reply-item { margin-left: 25px; padding-top: 15px; } button { margin-left: 16px; }
+</style>
+<h1>评论行内显示 · 合成数据验证</h1><p>以下地区用于验证显示位置、节点复用和开关，并非真实账号属地。</p>
+<div class="card">新版评论组件：第一条评论<bili-comment-action-buttons-renderer id="main"></bili-comment-action-buttons-renderer></div>
+<div class="card">新版楼中楼：同一账号的另一条内容<bili-comment-action-buttons-renderer id="sub"></bili-comment-action-buttons-renderer></div>
+<div id="legacy"></div><div id="vue"></div><div id="network"></div>
+<script>
+class Actions extends HTMLElement {
+  constructor() { super(); this.attachShadow({mode:'open'}); }
+  // 与真实 B 站组件一致：#pubdate 直接位于 ShadowRoot 中。
+  update() { this.shadowRoot.innerHTML = '<style>:host{display:flex;align-items:center;margin-top:12px;color:var(--muted);font-size:13px}button{margin-left:16px}#pubdate{color:var(--muted)}</style><div id="pubdate">刚刚</div><button>回复</button>'; }
+}
+customElements.define('bili-comment-action-buttons-renderer', Actions);
+const reply = (id,location) => ({rpid_str:id,mid:9,reply_control:{location}});
+window.fixture = {
+  update(id,location) { const n=document.getElementById('main'); n.data=reply(id,location); n.update(); },
+  append(id,location) { const n=document.createElement('bili-comment-action-buttons-renderer'); n.data=reply(id,location); document.body.append(n); n.update(); return n; }
+};
+fixture.update('1001','IP属地：河北');
+document.getElementById('sub').data=reply('1002','IP属地：浙江'); document.getElementById('sub').update();
+window.bbComment = class {};
+bbComment.prototype._createListCon = function(item) { return '<div class="list-item card" data-id="'+item.rpid_str+'">旧版评论组件<div class="info"><span class="reply-time">刚刚</span><button>回复</button></div></div>'; };
+bbComment.prototype._createSubReplyItem = bbComment.prototype._createListCon;
+// 实际旧组件的方法通常先定义再挂到 window；此处重新赋值触发对应的挂载过程。
+window.bbComment = bbComment;
+document.getElementById('legacy').innerHTML = new bbComment()._createListCon(reply('1003','IP属地：北京'));
+const vue=document.createElement('div'); vue.className='reply-item card';
+vue.__vueParentComponent={props:{reply:reply('1004','IP属地：上海')}};
+vue.innerHTML='Vue 评论<div class="reply-info"><span class="reply-time">刚刚</span><button>回复</button></div><div class="sub-reply-item">Vue 楼中楼<div class="sub-reply-info"><span class="sub-reply-time">刚刚</span><button>回复</button></div></div>';
+vue.querySelector('.sub-reply-item').__vueParentComponent={props:{subReply:reply('1005','IP属地：四川')}};
+document.getElementById('vue').append(vue);
+document.getElementById('network').innerHTML='<div class="reply-item card" data-id="1006">接口响应匹配评论 ID<div class="reply-info"><span class="reply-time">刚刚</span><button>回复</button></div></div>';
+fetch('https://api.bilibili.com/x/v2/reply?fixture=1').then(r=>r.json());
+</script></html>

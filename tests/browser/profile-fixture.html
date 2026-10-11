@@ -1,0 +1,15 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>个人主页属地 · 合成验证</title>
+<style>:root{--text3:#9499a0;background:#fff;color:#18191c;font:15px system-ui}:root.dark{--text3:#aaa;background:#181818;color:#eee}body{max-width:900px;margin:40px auto}.h-basic,.upinfo-detail__top{padding:25px;border:1px solid var(--text3);border-radius:12px;display:flex;align-items:center}.h-basic>div{display:flex;align-items:center}#h-name,.nickname{font-size:26px}p{line-height:1.8}</style>
+<h1>个人主页属地 · 合成数据验证</h1>
+<p>此页面和返回资料均为测试数据，用于检查授权流程、UID 对应和显示行为，并非真实 UP 主属地。</p>
+<div id="app"><div class="h-basic"><div><span id="h-name">模拟 UP 100</span></div></div></div>
+<p>评论区继续使用每条评论自身的地区；这里的标签来自目标账号主页资料。</p>
+<script>
+document.cookie='bili_jct='+ '0'.repeat(32) +';path=/;Secure;SameSite=Lax';
+document.querySelector('#h-name').textContent='模拟 UP '+location.pathname.split('/')[1];
+window.fixtureProfile={
+  switch(uid,fresh=false){ history.pushState({},'', '/'+uid); document.querySelector('#app').innerHTML=fresh
+    ? '<div class="upinfo-detail__top"><span class="nickname">模拟 UP '+uid+'</span></div>'
+    : '<div class="h-basic"><div><span id="h-name">模拟 UP '+uid+'</span></div></div>'; },
+};
+</script></html>

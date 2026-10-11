@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <title>B站小电视 · IP 属地</title>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="#FB7299"/>
+  <path d="M44 42L32 25M84 42L96 25" stroke="white" stroke-width="7" stroke-linecap="round"/>
+  <rect x="20" y="38" width="88" height="61" rx="17" fill="white"/>
+  <rect x="27" y="45" width="74" height="47" rx="11" fill="#FB7299"/>
+  <path d="M43 57L40 68M85 57L88 68" stroke="white" stroke-width="7" stroke-linecap="round"/>
+  <path d="M52 76L58 81L64 77L70 81L76 76" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M32 97H42V104H32V97Z" fill="white"/>
+  <rect x="51" y="86" width="66" height="32" rx="16" fill="#61666D" stroke="#FB7299" stroke-width="4"/>
+  <path d="M70 94H76V110H70V94Z" fill="white"/>
+  <path fill-rule="evenodd" d="M81 94H89C94 94 97 97 97 101C97 105 94 107 89 107H87V110H81V94ZM87 98V103H89C91 103 92 102 92 101C92 99 91 98 89 98H87Z" fill="white"/>
+</svg>

@@ -1,0 +1,14 @@
+node_modules/
+dist/
+work/
+outputs/
+.playwright-cli/
+.env
+.env.*
+.npmrc
+*.log
+*.zip
+*.crx
+*.pem
+Thumbs.db
+.DS_Store

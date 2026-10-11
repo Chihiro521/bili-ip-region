@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>B站 IP 属地设置</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <div class="brand"><img src="icons/icon-48.png" width="40" height="40" alt=""><span class="badge">评论与主页 · 0.3.4</span></div>
+    <h1>B站 IP 属地</h1>
+    <label class="setting"><span>评论属地</span><input id="comments-enabled" type="checkbox" checked></label>
+    <p class="intro">评论和楼中楼在时间后显示灰色地区名：刚刚 河北 回复。</p>
+    <label class="setting"><span>个人主页属地</span><input id="profiles-enabled" type="checkbox" checked></label>
+    <p class="intro">授权后，打开任意 UP 主主页，在用户名旁显示该账号的 IP 属地。</p>
+    <p class="muted">首次授权会为当前 B 站账号创建一份设备登录凭据，并保存在此浏览器的扩展中。可在 B 站账号设置撤销该设备登录。</p>
+    <div class="actions">
+      <button id="profile-authorize">授权主页查询</button>
+      <button id="profile-clear" class="secondary" disabled>清除本地授权</button>
+    </div>
+    <p id="profile-status" role="status" class="muted">正在读取主页授权状态……</p>
+    <p class="muted">加载或更新扩展后，请刷新 B 站页面。</p>
+    <details id="diagnostics">
+    <summary>动态正文取数诊断（尚未通过）</summary>
+    <p class="intro">动态正文仍待取得两个发布者的有效属地，验证成功后接入页面。</p>
+    <label for="ids">动态链接或 ID（每行一条，最多 4 条）</label>
+    <textarea id="ids" rows="3" spellcheck="false"></textarea>
+    <div class="actions">
+      <button id="run">开始验证</button>
+      <button id="copy" class="secondary" disabled>复制报告</button>
+    </div>
+    <a id="open" target="_blank" rel="noopener">打开完整验证页面</a>
+    <p id="session" class="muted">请求沿用当前浏览器的网页登录。</p>
+    <p id="status" role="status">等待验证。</p>
+    <section id="results" aria-label="验证结果"></section>
+    </details>
+  </main>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

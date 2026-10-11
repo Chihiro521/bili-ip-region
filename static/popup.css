@@ -1,0 +1,30 @@
+:root { color-scheme: light dark; font-family: system-ui, "Microsoft YaHei", sans-serif; background: #f6f7fb; color: #202536; }
+body { margin: 0; min-width: 420px; }
+main { max-width: 680px; margin: auto; padding: 24px; }
+.badge { font-size: 12px; color: #727b93; }
+.brand { display: flex; align-items: center; gap: 10px; }
+h1 { margin: 10px 0; font-size: 24px; }
+.intro { color: #667089; font-size: 14px; line-height: 1.7; }
+.setting { display: flex; align-items: center; justify-content: space-between; padding: 14px; border: 1px solid #d4d9e5; border-radius: 10px; font-size: 15px; }
+.setting input { accent-color: #e85a85; width: 20px; height: 20px; }
+details { margin-top: 24px; border-top: 1px solid #d4d9e5; padding-top: 18px; }
+summary { cursor: pointer; font-size: 14px; }
+label { display: block; margin: 22px 0 8px; font-size: 13px; }
+textarea { box-sizing: border-box; width: 100%; border: 1px solid #d4d9e5; background: #fff; color: inherit; border-radius: 10px; padding: 12px; resize: vertical; font: 13px/1.7 monospace; }
+.actions { display: flex; gap: 10px; margin: 14px 0; }
+button { border: 0; border-radius: 8px; padding: 10px 16px; color: #fff; background: #e85a85; font: inherit; font-size: 14px; cursor: pointer; }
+button.secondary { color: #46536c; background: #e6eaf2; }
+button:disabled { opacity: .55; cursor: default; }
+a { color: #b64168; font-size: 13px; }
+.muted { color: #768198; font-size: 12px; }
+#status { font-size: 14px; line-height: 1.7; }
+article { background: #fff; border: 1px solid #e0e4ed; border-radius: 10px; padding: 14px; margin-top: 12px; }
+article strong { font-size: 13px; }
+article p { white-space: pre-wrap; overflow-wrap: anywhere; color: #64718b; font: 12px/1.8 monospace; margin: 9px 0 0; }
+@media (prefers-color-scheme: dark) {
+  :root { background: #181b25; color: #e5e9f3; }
+  textarea, article { background: #242936; border-color: #394054; }
+  .intro, .muted, article p, .badge { color: #a5afc4; }
+  a { color: #ff8bb0; }
+  button.secondary { background: #333c50; color: #dbe2f1; }
+}

@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "minimum_chrome_version": "121",
+  "name": "B站 IP 属地 · 评论与主页",
+  "version": "0.3.4",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "description": "评论和楼中楼在时间后显示地区；授权后在 UP 主主页显示账号属地。动态正文仍待验证。",
+  "permissions": ["storage", "declarativeNetRequestWithHostAccess"],
+  "host_permissions": [
+    "https://www.bilibili.com/*",
+    "https://t.bilibili.com/*",
+    "https://space.bilibili.com/*",
+    "https://app.bilibili.com/*",
+    "https://grpc.biliapi.net/*",
+    "https://api.bilibili.com/*"
+  ],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "optional_host_permissions": ["https://passport.bilibili.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.bilibili.com/*", "https://t.bilibili.com/*", "https://space.bilibili.com/*"],
+      "js": ["comment-bridge.js"], "world": "ISOLATED", "run_at": "document_start", "all_frames": true
+    },
+    {
+      "matches": ["https://www.bilibili.com/*", "https://t.bilibili.com/*", "https://space.bilibili.com/*"],
+      "js": ["comment-page.js"], "world": "MAIN", "run_at": "document_start", "all_frames": true
+    },
+    {
+      "matches": ["https://space.bilibili.com/*"],
+      "js": ["profile-page.js"], "world": "ISOLATED", "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "B 站 IP 属地设置",
+    "default_icon": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png" }
+  }
+}
