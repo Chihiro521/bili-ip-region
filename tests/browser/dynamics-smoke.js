@@ -39,7 +39,7 @@ async (page) => {
   await page.evaluate(()=>fixtureDynamic.reuse('001','010'));await labels.filter({hasText:'北京'}).waitFor();
   checks.reusedNodeRemovesOld=await labels.filter({hasText:'河北'}).count()===0;
   await page.evaluate(()=>document.documentElement.classList.add('dark'));
-  checks.themeAndSize=await labels.filter({hasText:'北京'}).evaluate(el=>{const s=getComputedStyle(el);return s.color==='rgb(255, 255, 255)'&&s.backgroundColor==='rgb(97, 102, 109)'&&s.fontSize==='12px'&&el.getBoundingClientRect().height===18;});
+  checks.themeAndSize=await labels.filter({hasText:'北京'}).evaluate(el=>{const s=getComputedStyle(el);return s.color==='rgb(255, 255, 255)'&&s.backgroundColor==='rgb(97, 102, 109)'&&s.fontSize===getComputedStyle(el.previousElementSibling).fontSize&&el.getBoundingClientRect().height<22;});
   await worker.evaluate(()=>chrome.storage.sync.set({dynamicsEnabled:false}));await labels.first().waitFor({state:'detached'});checks.switchOff=await labels.count()===0;
   await worker.evaluate(()=>chrome.storage.sync.set({dynamicsEnabled:true}));await labels.filter({hasText:'北京'}).waitFor();
   checks.switchOnAndCache=await worker.evaluate(()=>self.fixtureDynamicCalls['1245177092906156010']===1);

@@ -1,5 +1,7 @@
 import { articleTarget, sameArticle } from './article-data.ts';
 import type { ArticleResult, ArticleTarget } from './article-data.ts';
+import { normalizeProfileRegion } from './profile-data.ts';
+import { metadataFontSize } from './region-style.ts';
 
 // ISOLATED 世界：依据当前内容的 URL 取数，后台负责 Opus / CV / 作者对应关系。
 if (window.top === window) {
@@ -13,15 +15,16 @@ if (window.top === window) {
   function place(): void {
     const anchor = target?.kind === 'cv' ? document.querySelector<HTMLElement>('.article-detail .publish-text')
       : document.querySelector<HTMLElement>('.opus-module-author__pub');
-    if (!enabled || !sameArticle(target, result?.target) || result?.status !== 'ok' || !result.region || !anchor?.parentNode) { clear(); return; }
+    const region = normalizeProfileRegion(result?.region);
+    if (!enabled || !sameArticle(target, result?.target) || result?.status !== 'ok' || !region || !anchor?.parentNode) { clear(); return; }
     const labels = [...document.querySelectorAll<HTMLElement>(OWNED)];
     let label = labels.shift(); labels.forEach(node => node.remove());
     if (!label) { label = document.createElement('span'); label.dataset.biliIpRegionArticle = ''; }
-    const text = `IP属地：${result.region}`;
+    const text = `IP属地：${region}`;
     if (label.textContent !== text) label.textContent = text;
     label.dataset.articleId = result.articleId ?? ''; label.dataset.contentId = target!.id;
     label.title = '该专栏发表时的 IP 属地';
-    label.style.cssText = 'display:inline-flex;align-items:center;flex-shrink:0;margin-inline-start:6px;padding:1px 6px;border-radius:999px;background:#61666d;color:#fff;text-shadow:none;font-size:12px;font-weight:400;font-family:inherit;line-height:16px;white-space:nowrap;vertical-align:middle;';
+    label.style.cssText = `display:inline-flex;align-items:center;flex-shrink:0;margin-inline-start:6px;padding:1px 6px;border-radius:999px;background:#61666d;color:#fff;text-shadow:none;font-size:${metadataFontSize(anchor)};font-weight:400;font-family:inherit;line-height:1.25;white-space:nowrap;vertical-align:middle;`;
     if (target!.kind === 'opus') { if (label.parentNode !== anchor) anchor.append(label); }
     else if (label.previousSibling !== anchor) anchor.after(label);
   }
@@ -56,7 +59,7 @@ if (window.top === window) {
         .every(node => node instanceof Element && node.matches(OWNED)));
     })) return;
     schedule();
-  }).observe(document, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class'] });
+  }).observe(document, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class', 'style'] });
   for (const event of ['popstate', 'pageshow']) window.addEventListener(event, schedule);
   (window as unknown as { navigation?: EventTarget }).navigation?.addEventListener('navigatesuccess', schedule);
   setInterval(() => { const parsed = articleTarget(location.href), next = parsed?.kind === 'cv' ? parsed : null; if ((!sameArticle(next, target) && (next || target)) || (result && Date.now() >= nextRefresh)) schedule(); }, 1000);

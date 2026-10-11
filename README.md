@@ -5,7 +5,7 @@
 <h1 align="center">B站网页 IP 属地</h1>
 
 <p align="center">在 B 站网页中显示评论、楼中楼、动态、专栏与 UP 主个人主页的 IP 属地。</p>
-<p align="center"><strong>Chrome / Edge · 0.4.3 预览版</strong></p>
+<p align="center"><strong>Chrome / Edge · 0.4.4 预览版</strong></p>
 
 <p align="center">
   <strong>简体中文</strong> · <a href="README.en.md">English</a><br>

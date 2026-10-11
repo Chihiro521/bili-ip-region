@@ -1,6 +1,8 @@
 import { decodeBinding } from './dynamic-data.ts';
 import type { ContentBinding, DynamicResult } from './dynamic-data.ts';
 import type { ArticleResult } from './article-data.ts';
+import { normalizeProfileRegion } from './profile-data.ts';
+import { metadataFontSize } from './region-style.ts';
 if (window.top === window) {
   const MARKER = 'data-bili-ip-content', OWNED = '[data-bili-ip-region-body]';
   interface State { binding: ContentBinding; signature: string; result?: DynamicResult | ArticleResult; label?: HTMLElement; loading: boolean; epoch: number; nextRefresh: number; }
@@ -16,15 +18,16 @@ if (window.top === window) {
   function reset(): void { for (const [el,state] of states) { clear(el); state.epoch++; state.result = undefined; state.loading = false; state.nextRefresh = 0; } schedule(); }
   function place(el: Element, state: State): void {
     const { binding, result } = state;
+    const region = normalizeProfileRegion(result?.region);
     el.setAttribute('data-bili-ip-region-status', !enabled(binding) ? 'disabled' : state.loading ? 'pending' : result?.status ?? 'waiting');
-    if (!enabled(binding) || result?.status !== 'ok' || !result.region) { clear(el); return; }
+    if (!enabled(binding) || result?.status !== 'ok' || !region) { clear(el); return; }
     let label = state.label;
     if (!label) { label = document.createElement('span'); label.dataset.biliIpRegionBody = ''; state.label = label; }
     label.dataset.contentId = binding.id; label.dataset.authorMid = result.authorMid ?? ''; label.dataset.contentRole = binding.role;
     if ('target' in result) label.dataset.articleId = result.articleId ?? ''; else delete label.dataset.articleId;
-    label.textContent = binding.kind === 'article' ? `IP属地：${result.region}` : result.region;
+    label.textContent = binding.kind === 'article' ? `IP属地：${region}` : region;
     label.title = `${binding.role === 'original' ? '原动态' : binding.kind === 'article' ? '该专栏' : '该动态'}发表时的 IP 属地`;
-    label.style.cssText = 'display:inline-flex;align-items:center;flex-shrink:0;margin-inline-start:6px;padding:1px 6px;border-radius:999px;background:#61666d;color:#fff;text-shadow:none;font-size:12px;font-weight:400;font-family:inherit;line-height:16px;white-space:nowrap;vertical-align:middle;';
+    label.style.cssText = `display:inline-flex;align-items:center;flex-shrink:0;margin-inline-start:6px;padding:1px 6px;border-radius:999px;background:#61666d;color:#fff;text-shadow:none;font-size:${metadataFontSize(el)};font-weight:400;font-family:inherit;line-height:1.25;white-space:nowrap;vertical-align:middle;`;
     if (el.matches('.bili-dyn-time')) { if (label.previousSibling !== el) el.after(label); }
     else if (label.parentNode !== el) el.append(label);
   }

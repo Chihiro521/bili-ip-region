@@ -46,6 +46,12 @@ for (const method of ['DynDetail', 'OpusDetail'] as Method[]) {
     assert.equal(decodeResponse(method, response(method, '', 1n, id, 'IP属地：')).location, null);
     assert.throws(() => decodeResponse(method, response(method, '上海', 1n, id, 'IP属地：浙江')), /来源不一致/);
   });
+  test(`${method} 取出混合浏览次数字段中的属地，并核对两个来源`, () => {
+    const data = decodeResponse(method, response(method, '63浏览 IP属地：河北', 1n, id, 'IP属地：河北'));
+    assert.equal(data.location, '河北');
+    assert.equal(decodeResponse(method, response(method, null, 1n, id, '63浏览 IP属地：河北')).location, '河北');
+    assert.equal(decodeResponse(method, response(method, '63浏览')).location, null);
+  });
 }
 
 test('拒绝截断帧、压缩帧和溢出的 protobuf varint', () => {

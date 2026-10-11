@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { uidString, spaceUid, decodeProfileResponse, decodeCredential } from '../src/profile-data.ts';
+import { uidString, spaceUid, decodeProfileResponse, decodeCredential, normalizeProfileRegion } from '../src/profile-data.ts';
 import { ProfileApi, signAppQuery } from '../src/profile-api.ts';
 import { APP_SIGN_KEY } from '../src/profile-client-constants.ts';
 
@@ -21,6 +21,16 @@ test('空属地不显示，冲突地区及失败响应不沿用已有标签', ()
   assert.throws(() => decodeProfileResponse({ code: 0, data: { card: { mid: '100', space_tag: [{ type: 'location', title: '河北' }], space_tag_bottom: [{ type: 'location', title: '浙江' }] } } }, '100'), /不一致/);
   assert.equal(decodeProfileResponse({ code: -101 }, '100').status, 'expired');
   assert.throws(() => decodeProfileResponse({ code: -400 }, '100'), /错误/);
+});
+
+test('属地文字排除浏览次数，只保留地区', () => {
+  for (const value of ['63浏览 IP属地：河北', '63浏览IP属地: 河北', 'IP属地：河北 · 1.2万浏览', '63浏览 · 河北']) {
+    assert.equal(normalizeProfileRegion(value), '河北');
+  }
+  assert.equal(normalizeProfileRegion('IP属地：Hong Kong'), 'Hong Kong');
+  for (const value of ['63浏览', '1.2万次阅读', '63浏览 IP属地：', '63浏览 IP属地：未知']) {
+    assert.equal(normalizeProfileRegion(value), null);
+  }
 });
 test('App 请求使用排序后的参数和正确签名，不丢失目标 UID', () => {
   const query = signAppQuery({ vmid: '946974', build: '6720300', appkey: 'fixture' }, false, 123);

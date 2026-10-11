@@ -11,7 +11,10 @@ export function spaceUid(input: string): string | null {
 }
 export function normalizeProfileRegion(value: unknown): string | null {
   if (typeof value !== 'string') return null;
-  const region = value.trim().replace(/^IP\s*(?:归属地|属地)\s*[：:]\s*/i, '').trim();
+  const text = value.trim();
+  const location = text.match(/IP\s*(?:归属地|属地)\s*[：:]\s*(.*)$/i)?.[1] ?? text;
+  const region = location.replace(/\d+(?:[.,]\d+)*\s*(?:万|亿)?\s*(?:次)?(?:浏览|阅读)/g, '')
+    .replace(/^[\s·•|｜,，]+|[\s·•|｜,，]+$/g, '').trim();
   return region && region.length <= 80 && !/^(未知|未知地区|未知属地|暂无|无)$/.test(region) ? region : null;
 }
 export type ProfileStatus = 'ok' | 'empty' | 'auth-required' | 'expired' | 'disabled' | 'error';

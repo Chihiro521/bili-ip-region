@@ -1,5 +1,6 @@
 // 字段依据 bilibili-API-collect 的 dynamic.proto / opus.proto。
 // 仅解析顶层动态的作者及详情底部模块，避免串用转发内原动态的属地。
+import { normalizeProfileRegion } from './profile-data.ts';
 export type Method = 'DynDetail' | 'OpusDetail';
 type Field = { number: number; wire: number; integer?: bigint; bytes?: Uint8Array };
 const encoder = new TextEncoder();
@@ -161,20 +162,18 @@ function decodeItem(method: Method, item: Field[], returnedId: string | null): D
     for (const caption of fields(copyrightBytes).filter(field =>
       (field.number === 1 || field.number === 2) && field.wire === 2)) {
       const text = decoder.decode(caption.bytes!);
-      if (/^\s*IP\s*属地\s*[:：]/i.test(text)) footerLocations.push(text);
+      if (/IP\s*(?:归属地|属地)\s*[:：]/i.test(text)) footerLocations.push(text);
     }
   }
   const authorMid = author.find(field => field.number === 1 && field.wire === 0)?.integer;
   const time = author.find(field => field.number === 2 && field.wire === 2)?.bytes;
   const region = author.find(field => field.number === 14 && field.wire === 2);
-  const normalize = (text: string | null): string | null =>
-    text?.replace(/^\s*IP\s*属地\s*[:：]\s*/i, '').trim() || null;
   const authorLocation = region?.bytes ? decoder.decode(region.bytes) : null;
-  const knownRegions = new Set([authorLocation, ...footerLocations].map(normalize).filter(Boolean));
+  const knownRegions = new Set([authorLocation, ...footerLocations].map(normalizeProfileRegion).filter(Boolean));
   if (knownRegions.size > 1) throw new Error('同一动态的属地来源不一致');
-  const footerLocation = footerLocations.find(text => normalize(text)) ?? footerLocations[0] ?? null;
+  const footerLocation = footerLocations.find(text => normalizeProfileRegion(text)) ?? footerLocations[0] ?? null;
   const rawLocation = footerLocation ?? authorLocation;
-  const location = normalize(rawLocation);
+  const location = normalizeProfileRegion(rawLocation);
   return {
     returnedId,
     authorMid: authorMid?.toString() ?? null,
